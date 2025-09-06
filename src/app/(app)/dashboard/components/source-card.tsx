@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -85,10 +86,10 @@ export function SourceCard({ source }: SourceCardProps) {
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{source.title}</DialogTitle>
-              <CardDescription>Full source content</CardDescription>
+              <CardDescription>AI-generated summary</CardDescription>
             </DialogHeader>
             <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4">
-              <p className="text-sm whitespace-pre-wrap">{source.content}</p>
+              <p className="text-sm whitespace-pre-wrap">{source.summary}</p>
             </div>
           </DialogContent>
         </Dialog>
