@@ -20,12 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
-import * as pdfjs from 'pdfjs-dist';
-
-// Set worker source for pdf.js to prevent 'canvas' module error
-if (typeof window !== 'undefined') {
-    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-}
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -121,48 +115,15 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     setIsSummarizing(false);
   }
 
-  const extractTextFromFile = async (file: File): Promise<string> => {
-    if (file.type === 'application/pdf') {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdfDoc = await pdfjs.getDocument(arrayBuffer).promise;
-        let textContent = '';
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-            const page = await pdfDoc.getPage(i);
-            const text = await page.getTextContent();
-            textContent += text.items.map((s: any) => s.str).join(' ');
-        }
-        return textContent;
-    } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-        return file.text();
-    } else {
-        // Since mammoth is removed, we cannot process .docx on the client.
-        // We will just inform the user about it.
-        toast({
-            variant: 'destructive',
-            title: 'Unsupported File Type',
-            description: '.docx files are not supported in this version.',
-        });
-        return '';
-    }
-  }
-
   async function handleUploadSubmit() {
     if (!file) return;
     setIsProcessing(true);
 
     try {
-        const documentContent = await extractTextFromFile(file);
-
-        if (!documentContent) {
-            // Error toast is handled in extractTextFromFile for .docx
-            if (!file.name.endsWith('.docx')) {
-                throw new Error(`Could not extract text from ${file.name}. The file might be empty or corrupted.`);
-            }
-            setIsProcessing(false);
-            return;
-        }
-
-        const { processedSource, error } = await processFileUploadAction(documentContent);
+        const fileData = new FormData();
+        fileData.append('file', file);
+        
+        const { processedSource, error } = await processFileUploadAction(fileData);
         
         setIsProcessing(false);
         if (error || !processedSource) {
@@ -182,7 +143,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     } catch (e: any) {
         console.error(e);
         setIsProcessing(false);
-        toast({ variant: 'destructive', title: 'File Processing Error', description: e.message || 'Could not extract text from the selected file.' });
+        toast({ variant: 'destructive', title: 'File Processing Error', description: e.message || 'Could not process the selected file.' });
     }
   }
 
@@ -209,7 +170,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
       return (
         <>
         <DialogDescription>
-            Upload a document (PDF, DOCX, TXT). The AI will automatically extract the title, category, and summary.
+            Upload a document (PDF, DOCX, TXT, MD). The AI will automatically extract the title, category, and summary.
         </DialogDescription>
         <div className="py-4">
             {!file ? (
@@ -225,8 +186,8 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
                     <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-muted-foreground">PDF, TXT, or MD files</p>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".txt,.md,text/*,.pdf" />
+                    <p className="text-xs text-muted-foreground">PDF, DOCX, TXT, or MD files</p>
+                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".pdf,.docx,.txt,.md" />
                 </div>
             ) : (
                 <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
