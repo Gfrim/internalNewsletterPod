@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
-import { UnstructuredLoader } from "unstructured-client";
+import { UnstructuredClient } from "unstructured-client";
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -118,12 +118,22 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     setIsProcessing(true);
 
     try {
-        const loader = new UnstructuredLoader({
-            file: file,
-            apiUrl: "/api/unstructured",
+        const client = new UnstructuredClient({
+            // The API proxy is exposed at /api/unstructured
+            // and is responsible for adding the API key.
+            serverURL: "/api/unstructured",
+            // The API key is not needed when using a proxy.
+            apiKey: "",
         });
-        const docs = await loader.load();
-        const content = docs.map(doc => doc.pageContent).join('\n\n');
+
+        const resp = await client.general.partition({
+            files: {
+                content: file,
+                fileName: file.name,
+            }
+        });
+
+        const content = resp.elements.map(el => el.text).join('\n\n');
 
         const { processedSource, error } = await processDocumentAction(content);
         
