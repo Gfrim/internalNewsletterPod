@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const UNSTRUCTURED_API_KEY = process.env.UNSTRUCTURED_API_KEY;
 
     if (!UNSTRUCTURED_API_KEY) {
-      throw new Error("UNSTRUCTURED_API_KEY is not set");
+      return NextResponse.json({ error: "The UNSTRUCTURED_API_KEY environment variable is not set. Please add it to your .env file." }, { status: 500 });
     }
 
     const client = new UnstructuredClient({
