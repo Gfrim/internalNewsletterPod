@@ -3,6 +3,7 @@
 import { summarizeLongInput } from '@/ai/flows/summarize-long-inputs';
 import { answerQuestionsAboutContent } from '@/ai/flows/answer-questions-about-content';
 import { generateNewsletterDraft } from '@/ai/flows/generate-newsletter-draft';
+import { processDocumentSource, ProcessDocumentSourceOutput } from '@/ai/flows/process-document-source';
 import type { Source } from '@/lib/types';
 
 export async function getSummaryAction(content: string): Promise<{ summary: string; error?: string }> {
@@ -44,5 +45,20 @@ export async function generateNewsletterAction(
   } catch (error) {
     console.error('Error generating newsletter:', error);
     return { draft: '', error: 'Failed to generate newsletter draft. Please try again.' };
+  }
+}
+
+export async function processDocumentAction(
+  documentContent: string
+): Promise<{ processedSource?: ProcessDocumentSourceOutput; error?: string }> {
+  if (!documentContent) {
+    return { error: 'Document content is empty.' };
+  }
+  try {
+    const result = await processDocumentSource({ documentContent });
+    return { processedSource: result };
+  } catch (error) {
+    console.error('Error processing document:', error);
+    return { error: 'Failed to process document. The AI may have been unable to extract the required information. Please try again.' };
   }
 }

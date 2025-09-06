@@ -1,10 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, UploadCloud, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,35 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { CATEGORIES, type Category, type Source } from '@/lib/types';
-import { getSummaryAction } from '@/app/actions';
+import type { Source } from '@/lib/types';
+import { processDocumentAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-
-const formSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters.'),
-  content: z.string().min(50, 'Content must be at least 50 characters to summarize.'),
-  category: z.enum(CATEGORIES),
-  url: z.string().url().optional().or(z.literal('')),
-});
-
-type AddSourceFormValues = z.infer<typeof formSchema>;
+import { cn } from '@/lib/utils';
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -51,141 +23,169 @@ interface AddSourceDialogProps {
 }
 
 export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSourceDialogProps) {
-  const [isSummarizing, setIsSummarizing] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [file, setFile] = React.useState<File | null>(null);
+  const [dragActive, setDragActive] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const form = useForm<AddSourceFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      content: '',
-      category: 'key activities',
-      url: '',
-    },
-  });
-
-  async function onSubmit(values: AddSourceFormValues) {
-    setIsSummarizing(true);
-    const { summary, error } = await getSummaryAction(values.content);
-    setIsSummarizing(false);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Summarization Failed',
-        description: error,
-      });
-      return;
+  const handleFileChange = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      // For now, we only support single file uploads
+      const selectedFile = files[0];
+      if (selectedFile.type === 'text/plain' || selectedFile.type === 'text/markdown' || selectedFile.type === 'application/pdf' || selectedFile.type.startsWith('text/')) {
+        setFile(selectedFile);
+      } else {
+        toast({
+            variant: 'destructive',
+            title: 'Unsupported File Type',
+            description: 'Please upload a plain text, markdown or PDF file.',
+        })
+      }
     }
+  };
 
-    const newSource: Source = {
-      id: crypto.randomUUID(),
-      ...values,
-      summary,
-      createdAt: new Date().toISOString(),
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    handleFileChange(e.dataTransfer.files);
+  };
+  
+  const handleReset = () => {
+    setFile(null);
+    setIsProcessing(false);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  }
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      handleReset();
+    }
+    onOpenChange(isOpen);
+  }
+
+  async function handleSubmit() {
+    if (!file) return;
+
+    setIsProcessing(true);
+
+    const reader = new FileReader();
+    reader.readAsText(file, 'UTF-8');
+    reader.onload = async (evt) => {
+        const content = evt.target?.result as string;
+        const { processedSource, error } = await processDocumentAction(content);
+        
+        setIsProcessing(false);
+
+        if (error || !processedSource) {
+            toast({
+                variant: 'destructive',
+                title: 'Processing Failed',
+                description: error || 'An unknown error occurred.',
+            });
+            return;
+        }
+
+        const newSource: Source = {
+            id: crypto.randomUUID(),
+            ...processedSource,
+            createdAt: new Date().toISOString(),
+        };
+
+        onSourceAdded(newSource);
+        toast({
+            title: "Source Added",
+            description: `"${newSource.title}" has been processed and added.`
+        });
+        handleOpenChange(false);
     };
-
-    onSourceAdded(newSource);
-    toast({
-        title: "Source Added",
-        description: `"${newSource.title}" has been summarized and added.`
-    })
-    onOpenChange(false);
-    form.reset();
+    reader.onerror = () => {
+        setIsProcessing(false);
+        toast({
+            variant: 'destructive',
+            title: 'File Read Error',
+            description: 'Could not read the selected file.',
+        });
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[625px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Add New Source</DialogTitle>
+          <DialogTitle>Add New Source from Document</DialogTitle>
           <DialogDescription>
-            Paste your content below. The AI will generate a concise summary.
+            Upload a document. The AI will automatically extract the title, category, and summary.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Q2 Engineering Sprint Review" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Content</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Paste your meeting transcript, blog post, or report here..."
-                      className="min-h-[150px] resize-y"
-                      {...field}
+
+        <div className="py-4">
+            {!file ? (
+                <div
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn(
+                        "relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/75 transition-colors",
+                        dragActive && "border-primary bg-primary/10"
+                    )}
+                >
+                    <UploadCloud className="w-10 h-10 text-muted-foreground mb-2" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-muted-foreground">TXT, MD, or PDF files</p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => handleFileChange(e.target.files)}
+                        accept=".txt,.md,.pdf,text/*"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat} className="capitalize">
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                  control={form.control}
-                  name="url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Source URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/doc" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-            <DialogFooter className="pt-4">
-              <Button type="submit" disabled={isSummarizing}>
-                {isSummarizing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
-                )}
-                Summarize & Add
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                </div>
+            ) : (
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+                    <div className="flex items-center gap-3">
+                        <FileText className="w-6 h-6 text-primary" />
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium">{file.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                                {(file.size / 1024).toFixed(2)} KB
+                            </span>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={handleReset} className="h-7 w-7 rounded-full">
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            )}
+        </div>
+
+        <DialogFooter className="pt-4">
+          <Button onClick={handleSubmit} disabled={isProcessing || !file}>
+            {isProcessing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="mr-2 h-4 w-4" />
+            )}
+            Process & Add Source
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
