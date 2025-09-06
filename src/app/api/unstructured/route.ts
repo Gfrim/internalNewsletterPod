@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
     } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
         const result = await mammoth.extractRawText({ buffer: fileBuffer });
         text = result.value;
-    } else if (file.type === 'text/plain' || file.type === 'text/markdown') {
+    } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
         text = fileBuffer.toString('utf-8');
     } else {
-        return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
+        return NextResponse.json({ error: `Unsupported file type: ${file.type}` }, { status: 400 });
     }
 
     if (!text) {
