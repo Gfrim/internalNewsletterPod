@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import { Loader2, Sparkles, UploadCloud, FileText, X, ArrowLeft, FileSignature, FileUp } from 'lucide-react';
+import * as pdfjs from 'pdfjs-dist';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,6 +21,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
+
+// Set up the PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -43,16 +47,14 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
   const handleFileChange = (files: FileList | null) => {
     if (files && files.length > 0) {
       const selectedFile = files[0];
-      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'text/markdown'];
-      const isAllowed = allowedTypes.includes(selectedFile.type) || selectedFile.name.endsWith('.docx') || selectedFile.name.endsWith('.md') || selectedFile.name.endsWith('.txt');
-
-      if (isAllowed) {
+      const allowedTypes = ['application/pdf', 'text/plain', 'text/markdown'];
+      if (allowedTypes.includes(selectedFile.type)) {
         setFile(selectedFile);
       } else {
         toast({
             variant: 'destructive',
             title: 'Unsupported File Type',
-            description: 'Please upload a PDF, DOCX, TXT or MD file.',
+            description: 'Please upload a PDF, TXT or MD file.',
         })
       }
     }
@@ -120,26 +122,41 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     setIsProcessing(true);
 
     try {
-        const fileData = new FormData();
-        fileData.append('file', file);
-        
-        const { processedSource, error } = await processFileUploadAction(fileData);
-        
-        setIsProcessing(false);
-        if (error || !processedSource) {
-            toast({ variant: 'destructive', title: 'Processing Failed', description: error || 'An unknown error occurred.' });
-            return;
+      let documentContent = '';
+      const fileBuffer = await file.arrayBuffer();
+
+      if (file.type === 'application/pdf') {
+        const loadingTask = pdfjs.getDocument(fileBuffer);
+        const pdf = await loadingTask.promise;
+        const numPages = pdf.numPages;
+        let fullText = '';
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => (item as any).str).join(' ');
         }
+        documentContent = fullText;
+      } else {
+        documentContent = new TextDecoder().decode(fileBuffer);
+      }
+        
+      const { processedSource, error } = await processFileUploadAction(documentContent);
+        
+      setIsProcessing(false);
+      if (error || !processedSource) {
+          toast({ variant: 'destructive', title: 'Processing Failed', description: error || 'An unknown error occurred.' });
+          return;
+      }
 
-        const newSource: Source = {
-            id: crypto.randomUUID(),
-            ...processedSource,
-            createdAt: new Date().toISOString(),
-        };
+      const newSource: Source = {
+          id: crypto.randomUUID(),
+          ...processedSource,
+          createdAt: new Date().toISOString(),
+      };
 
-        onSourceAdded(newSource);
-        toast({ title: "Source Added", description: `"${newSource.title}" has been processed and added.` });
-        handleOpenChange(false);
+      onSourceAdded(newSource);
+      toast({ title: "Source Added", description: `"${newSource.title}" has been processed and added.` });
+      handleOpenChange(false);
     } catch (e: any) {
         console.error(e);
         setIsProcessing(false);
@@ -170,7 +187,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
       return (
         <>
         <DialogDescription>
-            Upload a document (PDF, DOCX, TXT, MD). The AI will automatically extract the title, category, and summary.
+            Upload a document (PDF, TXT, MD). The AI will automatically extract the title, category, and summary.
         </DialogDescription>
         <div className="py-4">
             {!file ? (
@@ -186,8 +203,8 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
                     <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-muted-foreground">PDF, DOCX, TXT, or MD files</p>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".pdf,.docx,.txt,.md" />
+                    <p className="text-xs text-muted-foreground">PDF, TXT, or MD files</p>
+                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".pdf,.txt,.md" />
                 </div>
             ) : (
                 <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
@@ -287,4 +304,3 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
   );
 }
 
-    

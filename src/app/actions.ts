@@ -5,8 +5,6 @@ import { summarizeLongInput } from '@/ai/flows/summarize-long-inputs';
 import { answerQuestionsAboutContent } from '@/ai/flows/answer-questions-about-content';
 import { generateNewsletterDraft } from '@/ai/flows/generate-newsletter-draft';
 import { processDocumentSource, ProcessDocumentSourceOutput } from '@/ai/flows/process-document-source';
-import pdf from 'pdf-parse';
-import mammoth from 'mammoth';
 
 export async function getSummaryAction(content: string): Promise<{ summary: string; error?: string }> {
   if (!content) {
@@ -51,33 +49,12 @@ export async function generateNewsletterAction(
 }
 
 export async function processFileUploadAction(
-  formData: FormData
+  documentContent: string
 ): Promise<{ processedSource?: ProcessDocumentSourceOutput; error?: string }> {
+  if (!documentContent) {
+    return { error: 'Could not extract text from the file.' };
+  }
   try {
-    const file = formData.get('file') as File | null;
-    if (!file) {
-      return { error: 'No file uploaded.' };
-    }
-
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    let documentContent = '';
-
-    if (file.type === 'application/pdf') {
-        const data = await pdf(fileBuffer);
-        documentContent = data.text;
-    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
-        const { value } = await mammoth.extractRawText({ buffer: fileBuffer });
-        documentContent = value;
-    } else if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-        documentContent = fileBuffer.toString('utf-8');
-    } else {
-      return { error: 'Unsupported file type.' };
-    }
-
-    if (!documentContent) {
-      return { error: 'Could not extract text from the file.' };
-    }
-    
     const result = await processDocumentSource({ documentContent });
     return { processedSource: result };
   } catch (error: any) {
@@ -86,5 +63,3 @@ export async function processFileUploadAction(
     return { error: message };
   }
 }
-
-    
