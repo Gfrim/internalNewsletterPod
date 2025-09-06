@@ -1,6 +1,7 @@
 // /src/app/api/unstructured/route.ts
 import { NextResponse, NextRequest } from "next/server";
-import { UnstructuredClient } from "unstructured-client";
+import pdf from 'pdf-parse';
+import mammoth from 'mammoth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,29 +12,29 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const UNSTRUCTURED_API_KEY = process.env.UNSTRUCTURED_API_KEY;
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    let text = '';
 
-    if (!UNSTRUCTURED_API_KEY) {
-      return NextResponse.json({ error: "The UNSTRUCTURED_API_KEY environment variable is not set. Please add it to your .env file." }, { status: 500 });
+    if (file.type === 'application/pdf') {
+        const data = await pdf(fileBuffer);
+        text = data.text;
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+        text = result.value;
+    } else if (file.type === 'text/plain' || file.type === 'text/markdown') {
+        text = fileBuffer.toString('utf-8');
+    } else {
+        return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
     }
 
-    const client = new UnstructuredClient({
-        apiKey: UNSTRUCTURED_API_KEY,
-        // The SDK requires a serverURL, even if it's the default.
-        serverURL: "https://api.unstructured.io",
-    });
+    if (!text) {
+        return NextResponse.json({ error: "Could not extract text from the file." }, { status: 500 });
+    }
 
-    const resp = await client.general.partition({
-        files: {
-            content: file,
-            fileName: file.name,
-        }
-    });
-
-    return NextResponse.json(resp.elements);
+    return NextResponse.json({ text });
 
   } catch (error: any) {
-    console.error("Error in Unstructured proxy API:", error);
+    console.error("Error processing file:", error);
     return NextResponse.json({ error: error.message || "An unexpected error occurred." }, { status: 500 });
   }
 }

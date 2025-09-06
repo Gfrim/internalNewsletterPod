@@ -43,7 +43,9 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     if (files && files.length > 0) {
       const selectedFile = files[0];
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'text/markdown'];
-      if (allowedTypes.includes(selectedFile.type) || selectedFile.name.endsWith('.docx')) {
+      const isAllowed = allowedTypes.includes(selectedFile.type) || selectedFile.name.endsWith('.docx') || selectedFile.name.endsWith('.md') || selectedFile.name.endsWith('.txt');
+
+      if (isAllowed) {
         setFile(selectedFile);
       } else {
         toast({
@@ -130,8 +132,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
             throw new Error(errorBody.error || 'Failed to process file');
         }
 
-        const elements = await res.json();
-        const content = elements.map((el: any) => el.text).join('\n\n');
+        const { text: content } = await res.json();
 
         const { processedSource, error } = await processDocumentAction(content);
         
