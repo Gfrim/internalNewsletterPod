@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -7,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { mockSources } from '@/lib/data';
 import type { Source } from '@/lib/types';
 import { generateNewsletterAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { useSource } from '@/context/source-context';
 
 export default function NewsletterPage() {
+  const { sources } = useSource();
   const [selectedSources, setSelectedSources] = React.useState<Set<string>>(new Set());
   const [newsletterTitle, setNewsletterTitle] = React.useState('Weekly Internal Update');
   const [generatedDraft, setGeneratedDraft] = React.useState('');
@@ -45,7 +47,7 @@ export default function NewsletterPage() {
     setIsGenerating(true);
     setGeneratedDraft('');
 
-    const contentForDraft = mockSources
+    const contentForDraft = sources
       .filter((s) => selectedSources.has(s.id))
       .map(({ title, summary, category }) => ({ title, summary, category }));
 
@@ -87,7 +89,7 @@ export default function NewsletterPage() {
             <CardTitle>1. Select Content</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto space-y-4">
-            {mockSources.map((source) => (
+            {sources.map((source) => (
               <div key={source.id} className="flex items-start gap-4 rounded-md border p-4">
                 <Checkbox
                   id={`source-${source.id}`}

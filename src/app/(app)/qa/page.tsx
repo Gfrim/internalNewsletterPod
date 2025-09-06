@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -8,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getAnswerAction } from '@/app/actions';
-import { mockSources } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useSource } from '@/context/source-context';
 
 interface Message {
   id: string;
@@ -19,6 +20,7 @@ interface Message {
 }
 
 export default function QAPage() {
+  const { sources } = useSource();
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -43,7 +45,7 @@ export default function QAPage() {
     setIsLoading(true);
 
     try {
-      const allContent = mockSources.map((s) => `Title: ${s.title}\nContent: ${s.content}`).join('\n\n---\n\n');
+      const allContent = sources.map((s) => `Title: ${s.title}\nContent: ${s.content}`).join('\n\n---\n\n');
       const { answer, error } = await getAnswerAction(input, allContent);
 
       if (error) {

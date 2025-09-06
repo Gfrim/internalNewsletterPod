@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,17 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
 import type { Source } from '@/lib/types';
-import { mockSources } from '@/lib/data';
 import { AddSourceDialog } from './components/add-source-dialog';
 import { SourceCard } from './components/source-card';
+import { useSource } from '@/context/source-context';
 
 export default function DashboardPage() {
-  const [sources, setSources] = React.useState<Source[]>(mockSources);
+  const { sources, addSource } = useSource();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
   const handleAddSource = (newSource: Source) => {
-    setSources((prevSources) => [newSource, ...prevSources]);
+    addSource(newSource);
   };
 
   const filteredSources = sources.filter(

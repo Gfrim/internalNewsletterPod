@@ -1,13 +1,12 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BookCopy,
   LayoutDashboard,
   MessageCircleQuestion,
   Newspaper,
-  Settings,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -19,11 +18,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ThemeToggle } from '../theme-toggle';
 
