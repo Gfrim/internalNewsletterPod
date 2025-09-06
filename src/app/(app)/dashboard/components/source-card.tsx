@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -44,11 +45,11 @@ const categoryIcons: Record<Category, React.ElementType> = {
 };
 
 const categoryColors: Record<Category, string> = {
-    wins: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
-    challenges: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
-    'key activities': 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
-    internal: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800',
-    external: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800',
+    wins: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-800',
+    challenges: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:border-rose-800',
+    'key activities': 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/50 dark:text-sky-300 dark:border-sky-800',
+    internal: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600',
+    external: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800',
 };
 
 
@@ -86,7 +87,7 @@ export function SourceCard({ source }: SourceCardProps) {
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{source.title}</DialogTitle>
-              <CardDescription>AI-generated summary</CardDescription>
+              <DialogDescription>AI-generated summary</DialogDescription>
             </DialogHeader>
             <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4">
               <p className="text-sm whitespace-pre-wrap">{source.summary}</p>

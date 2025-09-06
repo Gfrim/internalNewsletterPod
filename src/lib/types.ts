@@ -1,6 +1,6 @@
 export const CATEGORIES = ['wins', 'challenges', 'key activities', 'internal', 'external'] as const;
 
-export type Category = typeof CATEGORIES[number];
+export type Category = (typeof CATEGORIES)[number];
 
 export interface Source {
   id: string;
