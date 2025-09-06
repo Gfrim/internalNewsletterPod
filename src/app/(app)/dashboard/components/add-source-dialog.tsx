@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
+import { UnstructuredLoader } from "unstructured-client";
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -42,13 +43,14 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
   const handleFileChange = (files: FileList | null) => {
     if (files && files.length > 0) {
       const selectedFile = files[0];
-      if (selectedFile.type === 'text/plain' || selectedFile.type === 'text/markdown' || selectedFile.type.startsWith('text/')) {
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'text/markdown'];
+      if (allowedTypes.includes(selectedFile.type) || selectedFile.name.endsWith('.docx')) {
         setFile(selectedFile);
       } else {
         toast({
             variant: 'destructive',
             title: 'Unsupported File Type',
-            description: 'Please upload a plain text or markdown file.',
+            description: 'Please upload a PDF, DOCX, TXT or MD file.',
         })
       }
     }
@@ -115,10 +117,14 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     if (!file) return;
     setIsProcessing(true);
 
-    const reader = new FileReader();
-    reader.readAsText(file, 'UTF-8');
-    reader.onload = async (evt) => {
-        const content = evt.target?.result as string;
+    try {
+        const loader = new UnstructuredLoader({
+            file: file,
+            apiUrl: "/api/unstructured",
+        });
+        const docs = await loader.load();
+        const content = docs.map(doc => doc.pageContent).join('\n\n');
+
         const { processedSource, error } = await processDocumentAction(content);
         
         setIsProcessing(false);
@@ -136,10 +142,10 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
         onSourceAdded(newSource);
         toast({ title: "Source Added", description: `"${newSource.title}" has been processed and added.` });
         handleOpenChange(false);
-    };
-    reader.onerror = () => {
+    } catch (e) {
+        console.error(e);
         setIsProcessing(false);
-        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
+        toast({ variant: 'destructive', title: 'File Processing Error', description: 'Could not extract text from the selected file.' });
     }
   }
 
@@ -166,7 +172,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
       return (
         <>
         <DialogDescription>
-            Upload a document. The AI will automatically extract the title, category, and summary.
+            Upload a document (PDF, DOCX, TXT). The AI will automatically extract the title, category, and summary.
         </DialogDescription>
         <div className="py-4">
             {!file ? (
@@ -182,8 +188,8 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
                     <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-muted-foreground">TXT or MD files</p>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".txt,.md,text/*" />
+                    <p className="text-xs text-muted-foreground">PDF, DOCX, TXT, or MD files</p>
+                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".txt,.md,text/*,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
                 </div>
             ) : (
                 <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
@@ -282,3 +288,5 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     </Dialog>
   );
 }
+
+    
