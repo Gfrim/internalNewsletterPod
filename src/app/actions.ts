@@ -1,10 +1,12 @@
+
 'use server';
 
 import { summarizeLongInput } from '@/ai/flows/summarize-long-inputs';
 import { answerQuestionsAboutContent } from '@/ai/flows/answer-questions-about-content';
 import { generateNewsletterDraft } from '@/ai/flows/generate-newsletter-draft';
 import { processDocumentSource, ProcessDocumentSourceOutput } from '@/ai/flows/process-document-source';
-import type { Source } from '@/lib/types';
+import pdf from 'pdf-parse';
+import mammoth from 'mammoth';
 
 export async function getSummaryAction(content: string): Promise<{ summary: string; error?: string }> {
   if (!content) {
@@ -48,17 +50,42 @@ export async function generateNewsletterAction(
   }
 }
 
-export async function processDocumentAction(
-  documentContent: string
+async function extractTextFromFile(file: File): Promise<string> {
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    if (file.type === 'application/pdf') {
+        const data = await pdf(fileBuffer);
+        return data.text;
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+        return result.value;
+    } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+        return fileBuffer.toString('utf-8');
+    } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+    }
+}
+
+
+export async function processFileUploadAction(
+  formData: FormData
 ): Promise<{ processedSource?: ProcessDocumentSourceOutput; error?: string }> {
-  if (!documentContent) {
-    return { error: 'Document content is empty.' };
-  }
   try {
+    const file = formData.get('file') as File;
+    if (!file) {
+      return { error: 'No file provided.' };
+    }
+
+    const documentContent = await extractTextFromFile(file);
+
+    if (!documentContent) {
+      return { error: 'Could not extract text from the file.' };
+    }
+    
     const result = await processDocumentSource({ documentContent });
     return { processedSource: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing document:', error);
-    return { error: 'Failed to process document. The AI may have been unable to extract the required information. Please try again.' };
+    const message = error.message || 'Failed to process document. Please try again.';
+    return { error: message };
   }
 }

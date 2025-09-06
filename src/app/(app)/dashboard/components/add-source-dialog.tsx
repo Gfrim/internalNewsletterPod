@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { Category, Source } from '@/lib/types';
-import { processDocumentAction, getSummaryAction } from '@/app/actions';
+import { processFileUploadAction, getSummaryAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -123,19 +123,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
         const formData = new FormData();
         formData.append("file", file);
 
-        const res = await fetch("/api/unstructured", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (!res.ok) {
-            const errorBody = await res.json();
-            throw new Error(errorBody.error || 'Failed to process file');
-        }
-
-        const { text: content } = await res.json();
-
-        const { processedSource, error } = await processDocumentAction(content);
+        const { processedSource, error } = await processFileUploadAction(formData);
         
         setIsProcessing(false);
         if (error || !processedSource) {
