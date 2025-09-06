@@ -19,7 +19,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
-import { UnstructuredClient } from "unstructured-client";
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -118,23 +117,21 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     setIsProcessing(true);
 
     try {
-        const client = new UnstructuredClient({
-            // The API proxy is exposed at /api/unstructured
-            // and is responsible for adding the API key.
-            // We pass a relative URL and the browser will resolve it.
-            serverURL: "/api/unstructured",
-            // The API key is not needed when using a proxy.
-            apiKey: "",
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/unstructured", {
+            method: "POST",
+            body: formData,
         });
 
-        const resp = await client.general.partition({
-            files: {
-                content: file,
-                fileName: file.name,
-            }
-        });
+        if (!res.ok) {
+            const errorBody = await res.json();
+            throw new Error(errorBody.error || 'Failed to process file');
+        }
 
-        const content = resp.elements.map(el => el.text).join('\n\n');
+        const elements = await res.json();
+        const content = elements.map((el: any) => el.text).join('\n\n');
 
         const { processedSource, error } = await processDocumentAction(content);
         
@@ -153,10 +150,10 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
         onSourceAdded(newSource);
         toast({ title: "Source Added", description: `"${newSource.title}" has been processed and added.` });
         handleOpenChange(false);
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
         setIsProcessing(false);
-        toast({ variant: 'destructive', title: 'File Processing Error', description: 'Could not extract text from the selected file.' });
+        toast({ variant: 'destructive', title: 'File Processing Error', description: e.message || 'Could not extract text from the selected file.' });
     }
   }
 
