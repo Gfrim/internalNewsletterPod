@@ -1,3 +1,4 @@
+
 // Summarize Long Inputs Flow
 'use server';
 
@@ -18,7 +19,7 @@ const SummarizeLongInputInputSchema = z.object({
 export type SummarizeLongInputInput = z.infer<typeof SummarizeLongInputInputSchema>;
 
 const SummarizeLongInputOutputSchema = z.object({
-  summary: z.string().describe('A concise summary of the input content.'),
+  summary: z.string().describe('A detailed summary of the input content that captures all necessary information.'),
 });
 export type SummarizeLongInputOutput = z.infer<typeof SummarizeLongInputOutputSchema>;
 
@@ -30,7 +31,7 @@ const prompt = ai.definePrompt({
   name: 'summarizeLongInputPrompt',
   input: {schema: SummarizeLongInputInputSchema},
   output: {schema: SummarizeLongInputOutputSchema},
-  prompt: `Summarize the following content into a concise update suitable for a newsletter:
+  prompt: `Summarize the following content. Create a detailed summary that is comprehensive and captures all necessary and key information, while still being suitable for a newsletter format.
 
 {{{content}}}`,
 });

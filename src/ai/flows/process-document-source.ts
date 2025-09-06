@@ -21,7 +21,7 @@ export type ProcessDocumentSourceInput = z.infer<typeof ProcessDocumentSourceInp
 
 const ProcessDocumentSourceOutputSchema = z.object({
   title: z.string().describe('A concise and descriptive title for the document.'),
-  summary: z.string().describe('A concise summary of the document\'s content.'),
+  summary: z.string().describe('A detailed summary that captures all the necessary and key information from the document.'),
   category: z.enum(CATEGORIES).describe('The most relevant category for the document.'),
   content: z.string().describe('The original content of the document.'),
 });
@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
     
     Read the following document content and perform these tasks:
     1.  Create a concise, descriptive title for the document.
-    2.  Write a brief summary of the key information.
+    2.  Write a detailed summary that captures all the necessary and key information from the document.
     3.  Assign the most appropriate category from the following list: ${CATEGORIES.join(', ')}.
     4.  Return the original content.
 
