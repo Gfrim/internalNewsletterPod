@@ -20,6 +20,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
+import pdfjs from 'pdfjs-dist/build/pdf';
+import mammoth from 'mammoth';
+
+// Set worker source for pdf.js
+if (typeof window !== 'undefined') {
+    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+}
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -115,15 +122,36 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     setIsSummarizing(false);
   }
 
+  const extractTextFromFile = async (file: File): Promise<string> => {
+    if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await pdfjs.getDocument(arrayBuffer).promise;
+        let textContent = '';
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const text = await page.getTextContent();
+            textContent += text.items.map((s: any) => s.str).join(' ');
+        }
+        return textContent;
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        return result.value;
+    } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+        return file.text();
+    } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+    }
+  }
+
   async function handleUploadSubmit() {
     if (!file) return;
     setIsProcessing(true);
 
     try {
-        const formData = new FormData();
-        formData.append("file", file);
+        const documentContent = await extractTextFromFile(file);
 
-        const { processedSource, error } = await processFileUploadAction(formData);
+        const { processedSource, error } = await processFileUploadAction(documentContent);
         
         setIsProcessing(false);
         if (error || !processedSource) {
