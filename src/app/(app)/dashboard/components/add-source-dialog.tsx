@@ -121,6 +121,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
         const client = new UnstructuredClient({
             // The API proxy is exposed at /api/unstructured
             // and is responsible for adding the API key.
+            // We pass a relative URL and the browser will resolve it.
             serverURL: "/api/unstructured",
             // The API key is not needed when using a proxy.
             apiKey: "",
