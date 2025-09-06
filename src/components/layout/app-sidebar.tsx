@@ -25,6 +25,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { ThemeToggle } from '../theme-toggle';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -72,7 +73,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 mt-auto">
+      <SidebarFooter className="p-4 mt-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
                 <AvatarImage src="https://picsum.photos/100" alt="User Avatar" data-ai-hint="person face" />
@@ -83,6 +84,9 @@ export function AppSidebar() {
                 <span className="text-xs text-muted-foreground">demo@example.com</span>
             </div>
         </div>
+         <div className={cn(state === 'collapsed' && 'hidden')}>
+            <ThemeToggle />
+         </div>
       </SidebarFooter>
     </Sidebar>
   );
