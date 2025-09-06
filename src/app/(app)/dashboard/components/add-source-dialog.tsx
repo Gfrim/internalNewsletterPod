@@ -20,10 +20,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
-import pdfjs from 'pdfjs-dist/build/pdf';
-import mammoth from 'mammoth';
+import * as pdfjs from 'pdfjs-dist';
 
-// Set worker source for pdf.js
+// Set worker source for pdf.js to prevent 'canvas' module error
 if (typeof window !== 'undefined') {
     pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 }
@@ -133,14 +132,17 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
             textContent += text.items.map((s: any) => s.str).join(' ');
         }
         return textContent;
-    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        return result.value;
     } else if (file.type === 'text/plain' || file.type === 'text/markdown' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
         return file.text();
     } else {
-        throw new Error(`Unsupported file type: ${file.type}`);
+        // Since mammoth is removed, we cannot process .docx on the client.
+        // We will just inform the user about it.
+        toast({
+            variant: 'destructive',
+            title: 'Unsupported File Type',
+            description: '.docx files are not supported in this version.',
+        });
+        return '';
     }
   }
 
@@ -150,6 +152,15 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
 
     try {
         const documentContent = await extractTextFromFile(file);
+
+        if (!documentContent) {
+            // Error toast is handled in extractTextFromFile for .docx
+            if (!file.name.endsWith('.docx')) {
+                throw new Error(`Could not extract text from ${file.name}. The file might be empty or corrupted.`);
+            }
+            setIsProcessing(false);
+            return;
+        }
 
         const { processedSource, error } = await processFileUploadAction(documentContent);
         
@@ -214,8 +225,8 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
                     <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-muted-foreground">PDF, DOCX, TXT, or MD files</p>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".txt,.md,text/*,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                    <p className="text-xs text-muted-foreground">PDF, TXT, or MD files</p>
+                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".txt,.md,text/*,.pdf" />
                 </div>
             ) : (
                 <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
@@ -314,3 +325,5 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     </Dialog>
   );
 }
+
+    
