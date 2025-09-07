@@ -19,7 +19,7 @@ export function SourceProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const q = query(collection(db, "sources"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "newsletterCollection"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const sourcesData: Source[] = [];
       querySnapshot.forEach((doc) => {
@@ -41,7 +41,7 @@ export function SourceProvider({ children }: { children: React.ReactNode }) {
 
   const addSource = async (sourceData: Omit<Source, 'id' | 'createdAt'>) => {
     try {
-      await addDoc(collection(db, "sources"), {
+      await addDoc(collection(db, "newsletterCollection"), {
         ...sourceData,
         createdAt: new Date().toISOString(),
       });

@@ -60,7 +60,7 @@ export async function processFileUploadAction(
     const result = await processDocumentSource({ documentContent });
 
     // Save to Firestore
-    await addDoc(collection(db, "sources"), {
+    await addDoc(collection(db, "newsletterCollection"), {
         ...result,
         createdAt: new Date().toISOString(),
     });

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const processedSource = await processDocumentSource({ documentContent });
 
     // Save to Firestore
-    const docRef = await addDoc(collection(db, "sources"), {
+    const docRef = await addDoc(collection(db, "newsletterCollection"), {
       ...processedSource,
       url: url || '',
       createdAt: new Date().toISOString(),
