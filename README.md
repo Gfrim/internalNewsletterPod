@@ -21,6 +21,7 @@ The main dashboard provides a centralized, real-time view of all your content so
 - **Add Sources**: You can add content in two ways:
   - **Manual Entry**: Fill out a form with a title, the full content, a category, and an optional URL. You can use the built-in AI to generate a summary for your content.
   - **Document Upload**: Upload a file (`.pdf`, `.txt`, `.md`). The AI will automatically process the document to extract a relevant title, generate a detailed summary, and assign the most appropriate category.
+    - **Note on File Size**: To ensure reliable processing, please use files with extracted text content under **1 MB**. This is due to the document size limit in the Firestore database.
 - **Data Persistence**: All sources are saved to a Firestore database, ensuring your data is persistent and shared across all users.
 
 ### 2. AI-Powered Q&A
@@ -101,4 +102,3 @@ To use the automated ingestion API, you need to set a secret API key.
     ```
 3.  You must restart the application for this change to take effect.
 4.  When using a service like `n8n`, include this key in the `Authorization` header as a Bearer token: `Authorization: Bearer your_super_secret_api_key_here`.
-
