@@ -3,24 +3,55 @@
 
 import * as React from 'react';
 import type { Source } from '@/lib/types';
-import { mockSources } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 interface SourceContextType {
   sources: Source[];
-  addSource: (source: Source) => void;
+  addSource: (source: Omit<Source, 'id' | 'createdAt'>) => Promise<void>;
+  loading: boolean;
 }
 
 const SourceContext = React.createContext<SourceContextType | undefined>(undefined);
 
 export function SourceProvider({ children }: { children: React.ReactNode }) {
-  const [sources, setSources] = React.useState<Source[]>(mockSources);
+  const [sources, setSources] = React.useState<Source[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const addSource = (newSource: Source) => {
-    setSources((prevSources) => [newSource, ...prevSources]);
+  React.useEffect(() => {
+    const q = query(collection(db, "sources"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const sourcesData: Source[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        sourcesData.push({ 
+            id: doc.id, 
+            ...data,
+            // Ensure createdAt is a string
+            createdAt: data.createdAt instanceof Date ? data.createdAt.toISOString() : data.createdAt
+        } as Source);
+      });
+      setSources(sourcesData);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  const addSource = async (sourceData: Omit<Source, 'id' | 'createdAt'>) => {
+    try {
+      await addDoc(collection(db, "sources"), {
+        ...sourceData,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
   };
 
   return (
-    <SourceContext.Provider value={{ sources, addSource }}>
+    <SourceContext.Provider value={{ sources, addSource, loading }}>
       {children}
     </SourceContext.Provider>
   );

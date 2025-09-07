@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
+import { useSource } from '@/context/source-context';
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
@@ -28,12 +29,12 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 interface AddSourceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSourceAdded: (source: Source) => void;
+  // onSourceAdded is no longer needed as we write directly to DB
 }
 
 type InputMethod = 'upload' | 'form' | null;
 
-export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSourceDialogProps) {
+export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
   const [dragActive, setDragActive] = React.useState(false);
@@ -43,6 +44,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
   const [summary, setSummary] = React.useState('');
   const [isSummarizing, setIsSummarizing] = React.useState(false);
   const { toast } = useToast();
+  const { addSource } = useSource();
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files.length > 0) {
@@ -148,14 +150,7 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
           return;
       }
 
-      const newSource: Source = {
-          id: crypto.randomUUID(),
-          ...processedSource,
-          createdAt: new Date().toISOString(),
-      };
-
-      onSourceAdded(newSource);
-      toast({ title: "Source Added", description: `"${newSource.title}" has been processed and added.` });
+      toast({ title: "Source Added", description: `"${processedSource.title}" has been processed and added.` });
       handleOpenChange(false);
     } catch (e: any) {
         console.error(e);
@@ -170,14 +165,13 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
         return;
     }
     setIsProcessing(true);
-    const newSource: Source = {
-        id: crypto.randomUUID(),
+    
+    await addSource({
         ...formData,
         summary,
-        createdAt: new Date().toISOString(),
-    };
-    onSourceAdded(newSource);
-    toast({ title: "Source Added", description: `"${newSource.title}" has been added.` });
+    });
+
+    toast({ title: "Source Added", description: `"${formData.title}" has been added.` });
     setIsProcessing(false);
     handleOpenChange(false);
   }
@@ -303,4 +297,3 @@ export function AddSourceDialog({ open, onOpenChange, onSourceAdded }: AddSource
     </Dialog>
   );
 }
-

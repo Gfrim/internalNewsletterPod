@@ -5,6 +5,8 @@ import { summarizeLongInput } from '@/ai/flows/summarize-long-inputs';
 import { answerQuestionsAboutContent } from '@/ai/flows/answer-questions-about-content';
 import { generateNewsletterDraft } from '@/ai/flows/generate-newsletter-draft';
 import { processDocumentSource, ProcessDocumentSourceOutput } from '@/ai/flows/process-document-source';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export async function getSummaryAction(content: string): Promise<{ summary: string; error?: string }> {
   if (!content) {
@@ -56,6 +58,13 @@ export async function processFileUploadAction(
   }
   try {
     const result = await processDocumentSource({ documentContent });
+
+    // Save to Firestore
+    await addDoc(collection(db, "sources"), {
+        ...result,
+        createdAt: new Date().toISOString(),
+    });
+
     return { processedSource: result };
   } catch (error: any) {
     console.error('Error processing document:', error);

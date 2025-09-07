@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
 import { processDocumentSource } from '@/ai/flows/process-document-source';
-import { mockSources } from '@/lib/data';
 import type { Source } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from "firebase/firestore"; 
 
 export async function POST(request: Request) {
   const { INGEST_API_KEY } = process.env;
@@ -28,23 +29,19 @@ export async function POST(request: Request) {
 
     const processedSource = await processDocumentSource({ documentContent });
 
-    const newSource: Source = {
-      id: crypto.randomUUID(),
+    // Save to Firestore
+    const docRef = await addDoc(collection(db, "sources"), {
       ...processedSource,
-      url: url,
+      url: url || '',
       createdAt: new Date().toISOString(),
-    };
-
-    // In a real application, you would save this to a database.
-    // For this demo, we'll add it to the in-memory mock data array.
-    mockSources.unshift(newSource);
+    });
 
     return NextResponse.json({
       message: 'Source ingested successfully',
       source: {
-        id: newSource.id,
-        title: newSource.title,
-        category: newSource.category,
+        id: docRef.id,
+        title: processedSource.title,
+        category: processedSource.category,
       }
     }, { status: 201 });
 
