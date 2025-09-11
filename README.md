@@ -58,7 +58,23 @@ To fully automate your information-gathering process, NewsFlash AI includes a se
 
 ## Setup & Configuration
 
-### 1. Firebase Project Setup
+To run this application, you need to configure a Firebase project and your Gemini API key.
+
+### 1. Environment Variables
+
+You need to provide API keys for the AI features and the secure ingestion endpoint.
+
+1.  **Create a `.env.local` file** in the root of the project.
+2.  **Add your keys** to this file, using `.env.example` as a template. You will need:
+    *   `GEMINI_API_KEY`: Your API key for Google Gemini, which powers all generative AI features. You can get one from [Google AI Studio](https://aistudio.google.com/app/apikey).
+    *   `INGEST_API_KEY`: A secret key you create for securing the `/api/ingest` endpoint.
+    ```
+    GEMINI_API_KEY="your_gemini_api_key_here"
+    INGEST_API_KEY="your_super_secret_api_key_here"
+    ```
+3.  You must restart the application for these changes to take effect.
+
+### 2. Firebase Project Setup
 
 This application requires a Firebase project to store and manage data using Firestore.
 
@@ -70,7 +86,7 @@ This application requires a Firebase project to store and manage data using Fire
 3.  **Update the Application**:
     *   Paste your `firebaseConfig` object into `src/lib/firebase.ts`, replacing the placeholder configuration.
 
-### 2. Firestore Database and Security Rules
+### 3. Firestore Database and Security Rules
 
 You need to enable Firestore and set up security rules to allow the application to access your data.
 
@@ -90,15 +106,3 @@ You need to enable Firestore and set up security rules to allow the application 
     }
     ```
 4.  **Publish** your rules.
-
-### 3. API Key for Ingestion
-
-To use the automated ingestion API, you need to set a secret API key.
-
-1.  **Create a `.env.local` file** in the root of the project.
-2.  **Add your secret key** to this file:
-    ```
-    INGEST_API_KEY=your_super_secret_api_key_here
-    ```
-3.  You must restart the application for this change to take effect.
-4.  When using a service like `n8n`, include this key in the `Authorization` header as a Bearer token: `Authorization: Bearer your_super_secret_api_key_here`.
