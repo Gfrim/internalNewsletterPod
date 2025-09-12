@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Sparkles, UploadCloud, FileText, X, ArrowLeft, FileSignature, FileUp } from 'lucide-react';
+import { Loader2, Sparkles, UploadCloud, FileText, X, ArrowLeft, FileSignature, FileUp, Paperclip } from 'lucide-react';
 import * as pdfjs from 'pdfjs-dist';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,10 +39,12 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const [file, setFile] = React.useState<File | null>(null);
   const [dragActive, setDragActive] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const manualFileInputRef = React.useRef<HTMLInputElement>(null);
   const [inputMethod, setInputMethod] = React.useState<InputMethod>(null);
   const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, url: '' });
   const [summary, setSummary] = React.useState('');
   const [isSummarizing, setIsSummarizing] = React.useState(false);
+  const [isAttaching, setIsAttaching] = React.useState(false);
   const { toast } = useToast();
   const { addSource } = useSource();
 
@@ -88,6 +90,9 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
+    if (manualFileInputRef.current) {
+        manualFileInputRef.current.value = "";
+    }
   }
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -119,29 +124,67 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsSummarizing(false);
   }
 
+  const extractTextFromFile = async (fileToProcess: File): Promise<string> => {
+    let documentContent = '';
+    const fileBuffer = await fileToProcess.arrayBuffer();
+
+    if (fileToProcess.type === 'application/pdf') {
+      const loadingTask = pdfjs.getDocument(fileBuffer);
+      const pdf = await loadingTask.promise;
+      const numPages = pdf.numPages;
+      let fullText = '';
+      for (let i = 1; i <= numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          fullText += textContent.items.map(item => (item as any).str).join(' ');
+      }
+      documentContent = fullText;
+    } else {
+      documentContent = new TextDecoder().decode(fileBuffer);
+    }
+    return documentContent;
+  }
+
+  const handleManualFileChange = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const attachedFile = files[0];
+    const allowedTypes = ['application/pdf', 'text/plain', 'text/markdown'];
+    if (!allowedTypes.includes(attachedFile.type)) {
+      toast({
+          variant: 'destructive',
+          title: 'Unsupported File Type',
+          description: 'Please attach a PDF, TXT or MD file.',
+      });
+      return;
+    }
+
+    setIsAttaching(true);
+    try {
+        const text = await extractTextFromFile(attachedFile);
+        setFormData(prev => ({
+            ...prev,
+            content: prev.content ? `${prev.content}\n\n--- Attached Content ---\n\n${text}` : text
+        }));
+        toast({ title: "File Attached", description: `Content from "${attachedFile.name}" has been added.` });
+    } catch (e: any) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Attachment Error', description: e.message || 'Could not process the attached file.' });
+    } finally {
+        setIsAttaching(false);
+        // Reset file input
+        if (manualFileInputRef.current) {
+            manualFileInputRef.current.value = "";
+        }
+    }
+  }
+
+
   async function handleUploadSubmit() {
     if (!file) return;
     setIsProcessing(true);
 
     try {
-      let documentContent = '';
-      const fileBuffer = await file.arrayBuffer();
-
-      if (file.type === 'application/pdf') {
-        const loadingTask = pdfjs.getDocument(fileBuffer);
-        const pdf = await loadingTask.promise;
-        const numPages = pdf.numPages;
-        let fullText = '';
-        for (let i = 1; i <= numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            fullText += textContent.items.map(item => (item as any).str).join(' ');
-        }
-        documentContent = fullText;
-      } else {
-        documentContent = new TextDecoder().decode(fileBuffer);
-      }
-        
+      const documentContent = await extractTextFromFile(file);
       const { processedSource, error } = await processFileUploadAction(documentContent);
         
       setIsProcessing(false);
@@ -229,16 +272,23 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
         return (
             <>
             <DialogDescription>
-                Fill in the details for your source manually. The AI can help you summarize the content.
+                Fill in the details for your source manually. You can attach a file to append its content.
             </DialogDescription>
             <div className="grid gap-4 py-4">
                 <Input name="title" placeholder="Source Title" value={formData.title} onChange={handleFormChange} />
                 <div className="relative">
-                    <Textarea name="content" placeholder="Paste or write your source content here..." value={formData.content} onChange={handleFormChange} className="min-h-[120px]" />
-                    <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || !formData.content} className="absolute bottom-2 right-2">
-                        {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Summarize
-                    </Button>
+                    <Textarea name="content" placeholder="Paste or write your source content here..." value={formData.content} onChange={handleFormChange} className="min-h-[120px] pr-28" />
+                    <div className="absolute top-2 right-2 flex flex-col gap-2">
+                        <Button size="sm" onClick={() => manualFileInputRef.current?.click()} variant="outline" disabled={isAttaching}>
+                            {isAttaching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
+                            Attach
+                        </Button>
+                         <input ref={manualFileInputRef} type="file" className="hidden" onChange={(e) => handleManualFileChange(e.target.files)} accept=".pdf,.txt,.md" />
+                        <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || !formData.content}>
+                            {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                            Summarize
+                        </Button>
+                    </div>
                 </div>
                 <Textarea readOnly placeholder="AI-generated summary will appear here." value={summary} className="min-h-[80px]" />
                 <div className="grid grid-cols-2 gap-4">
@@ -297,3 +347,5 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     </Dialog>
   );
 }
+
+    
