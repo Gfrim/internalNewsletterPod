@@ -10,4 +10,5 @@ export interface Source {
   category: Category;
   url?: string;
   createdAt: string;
+  imageUrl?: string;
 }

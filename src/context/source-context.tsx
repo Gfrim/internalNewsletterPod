@@ -33,6 +33,9 @@ export function SourceProvider({ children }: { children: React.ReactNode }) {
       });
       setSources(sourcesData);
       setLoading(false);
+    }, (error) => {
+        console.error("Error fetching sources:", error);
+        setLoading(false);
     });
 
     // Cleanup subscription on unmount

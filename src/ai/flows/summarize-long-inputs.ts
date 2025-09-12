@@ -1,4 +1,3 @@
-
 // Summarize Long Inputs Flow
 'use server';
 
@@ -15,6 +14,9 @@ import {z} from 'genkit';
 
 const SummarizeLongInputInputSchema = z.object({
   content: z.string().describe('The long content to be summarized, such as a document, meeting transcript, or event notes.'),
+  imageUrl: z.string().optional().describe(
+    "An optional image associated with the content, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
 export type SummarizeLongInputInput = z.infer<typeof SummarizeLongInputInputSchema>;
 
@@ -31,8 +33,14 @@ const prompt = ai.definePrompt({
   name: 'summarizeLongInputPrompt',
   input: {schema: SummarizeLongInputInputSchema},
   output: {schema: SummarizeLongInputOutputSchema},
-  prompt: `Summarize the following content. Create a detailed summary that is comprehensive and captures all necessary and key information, while still being suitable for a newsletter format.
+  prompt: `Summarize the following content. If an image is provided, incorporate details from the image into the summary. Create a detailed summary that is comprehensive and captures all necessary and key information, while still being suitable for a newsletter format.
 
+{{#if imageUrl}}
+Image:
+{{media url=imageUrl}}
+{{/if}}
+
+Content:
 {{{content}}}`,
 });
 

@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Sparkles, UploadCloud, FileText, X, ArrowLeft, FileSignature, FileUp, Paperclip } from 'lucide-react';
+import { Loader2, Sparkles, UploadCloud, FileText, X, ArrowLeft, FileSignature, FileUp, Paperclip, Image as ImageIcon } from 'lucide-react';
 import * as pdfjs from 'pdfjs-dist';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { Category, Source } from '@/lib/types';
+import type { Category } from '@/lib/types';
 import { processFileUploadAction, getSummaryAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES } from '@/lib/types';
 import { useSource } from '@/context/source-context';
+import Image from 'next/image';
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
@@ -41,7 +42,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const manualFileInputRef = React.useRef<HTMLInputElement>(null);
   const [inputMethod, setInputMethod] = React.useState<InputMethod>(null);
-  const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, url: '' });
+  const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, url: '', imageUrl: '' });
   const [summary, setSummary] = React.useState('');
   const [isSummarizing, setIsSummarizing] = React.useState(false);
   const [isAttaching, setIsAttaching] = React.useState(false);
@@ -51,14 +52,14 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const handleFileChange = (files: FileList | null) => {
     if (files && files.length > 0) {
       const selectedFile = files[0];
-      const allowedTypes = ['application/pdf', 'text/plain', 'text/markdown'];
+      const allowedTypes = ['application/pdf', 'text/plain', 'text/markdown', 'image/jpeg', 'image/png', 'image/webp'];
       if (allowedTypes.includes(selectedFile.type)) {
         setFile(selectedFile);
       } else {
         toast({
             variant: 'destructive',
             title: 'Unsupported File Type',
-            description: 'Please upload a PDF, TXT or MD file.',
+            description: 'Please upload a PDF, TXT, MD, JPG, or PNG file.',
         })
       }
     }
@@ -85,7 +86,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsProcessing(false);
     setFile(null);
     setInputMethod(null);
-    setFormData({ title: '', content: '', category: '' as Category, url: '' });
+    setFormData({ title: '', content: '', category: '' as Category, url: '', imageUrl: '' });
     setSummary('');
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -112,9 +113,9 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   }
 
   const handleGenerateSummary = async () => {
-    if (!formData.content) return;
+    if (!formData.content && !formData.imageUrl) return;
     setIsSummarizing(true);
-    const { summary: generatedSummary, error } = await getSummaryAction(formData.content);
+    const { summary: generatedSummary, error } = await getSummaryAction(formData.content, formData.imageUrl);
     if (error) {
       toast({ variant: 'destructive', title: 'Summarization Failed', description: error });
     } else {
@@ -123,6 +124,16 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     }
     setIsSummarizing(false);
   }
+
+  const fileToDataURI = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+  }
+
 
   const extractTextFromFile = async (fileToProcess: File): Promise<string> => {
     let documentContent = '';
@@ -139,7 +150,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
           fullText += textContent.items.map(item => (item as any).str).join(' ');
       }
       documentContent = fullText;
-    } else {
+    } else if (fileToProcess.type.startsWith('text/')) {
       documentContent = new TextDecoder().decode(fileBuffer);
     }
     return documentContent;
@@ -148,30 +159,35 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const handleManualFileChange = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const attachedFile = files[0];
-    const allowedTypes = ['application/pdf', 'text/plain', 'text/markdown'];
+    const allowedTypes = ['application/pdf', 'text/plain', 'text/markdown', 'image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(attachedFile.type)) {
       toast({
           variant: 'destructive',
           title: 'Unsupported File Type',
-          description: 'Please attach a PDF, TXT or MD file.',
+          description: 'Please attach a PDF, TXT, MD, JPG, or PNG file.',
       });
       return;
     }
 
     setIsAttaching(true);
     try {
-        const text = await extractTextFromFile(attachedFile);
-        setFormData(prev => ({
-            ...prev,
-            content: prev.content ? `${prev.content}\n\n--- Attached Content ---\n\n${text}` : text
-        }));
-        toast({ title: "File Attached", description: `Content from "${attachedFile.name}" has been added.` });
+        if (attachedFile.type.startsWith('image/')) {
+            const imageUrl = await fileToDataURI(attachedFile);
+            setFormData(prev => ({ ...prev, imageUrl }));
+            toast({ title: "Image Attached", description: `"${attachedFile.name}" has been attached.` });
+        } else {
+            const text = await extractTextFromFile(attachedFile);
+            setFormData(prev => ({
+                ...prev,
+                content: prev.content ? `${prev.content}\n\n--- Attached Content ---\n\n${text}` : text
+            }));
+            toast({ title: "File Attached", description: `Content from "${attachedFile.name}" has been added.` });
+        }
     } catch (e: any) {
         console.error(e);
         toast({ variant: 'destructive', title: 'Attachment Error', description: e.message || 'Could not process the attached file.' });
     } finally {
         setIsAttaching(false);
-        // Reset file input
         if (manualFileInputRef.current) {
             manualFileInputRef.current.value = "";
         }
@@ -184,8 +200,16 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsProcessing(true);
 
     try {
-      const documentContent = await extractTextFromFile(file);
-      const { processedSource, error } = await processFileUploadAction(documentContent);
+        let documentContent = '';
+        let imageUrl: string | undefined = undefined;
+
+        if (file.type.startsWith('image/')) {
+            imageUrl = await fileToDataURI(file);
+        } else {
+            documentContent = await extractTextFromFile(file);
+        }
+
+      const { processedSource, error } = await processFileUploadAction(documentContent, imageUrl);
         
       setIsProcessing(false);
       if (error || !processedSource) {
@@ -203,20 +227,55 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   }
 
   async function handleFormSubmit() {
-    if (!formData.title || !formData.content || !formData.category || !summary) {
-        toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please fill out all fields and generate a summary.' });
+    if ((!formData.title || !formData.category) && (!formData.content && !formData.imageUrl)) {
+        toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please fill out title, category, and provide content or an image.' });
         return;
     }
+     if (!summary) {
+        toast({ variant: 'destructive', title: 'Summary Required', description: 'Please generate a summary before adding the source.' });
+        return;
+    }
+
     setIsProcessing(true);
     
     await addSource({
-        ...formData,
+        title: formData.title,
+        content: formData.content,
+        category: formData.category,
+        url: formData.url,
         summary,
+        imageUrl: formData.imageUrl,
     });
 
     toast({ title: "Source Added", description: `"${formData.title}" has been added.` });
     setIsProcessing(false);
     handleOpenChange(false);
+  }
+
+  const renderFilePreview = () => {
+    if (!file) return null;
+
+    const isImage = file.type.startsWith('image/');
+    const Icon = isImage ? ImageIcon : FileText;
+
+    return (
+        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+            <div className="flex items-center gap-3">
+                {isImage ? (
+                    <Image src={URL.createObjectURL(file)} alt="Preview" width={40} height={40} className="rounded object-cover h-10 w-10" />
+                ) : (
+                    <Icon className="w-6 h-6 text-primary" />
+                )}
+                <div className="flex flex-col">
+                    <span className="text-sm font-medium">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</span>
+                </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => setFile(null)} className="h-7 w-7 rounded-full">
+                <X className="h-4 w-4" />
+            </Button>
+        </div>
+    );
   }
   
   const renderContent = () => {
@@ -224,7 +283,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
       return (
         <>
         <DialogDescription>
-            Upload a document (PDF, TXT, MD). The AI will automatically extract the title, category, and summary.
+            Upload a document (PDF, TXT, MD) or an image (JPG, PNG). The AI will automatically extract the title, category, and summary.
         </DialogDescription>
         <div className="py-4">
             {!file ? (
@@ -240,22 +299,11 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
                     <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-muted-foreground">PDF, TXT, or MD files</p>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".pdf,.txt,.md" />
+                    <p className="text-xs text-muted-foreground">PDF, TXT, MD, JPG, or PNG files</p>
+                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => handleFileChange(e.target.files)} accept=".pdf,.txt,.md,image/jpeg,image/png,image/webp" />
                 </div>
             ) : (
-                <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
-                    <div className="flex items-center gap-3">
-                        <FileText className="w-6 h-6 text-primary" />
-                        <div className="flex flex-col">
-                            <span className="text-sm font-medium">{file.name}</span>
-                            <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</span>
-                        </div>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => setFile(null)} className="h-7 w-7 rounded-full">
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+                renderFilePreview()
             )}
         </div>
         <DialogFooter className="pt-4">
@@ -272,10 +320,18 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
         return (
             <>
             <DialogDescription>
-                Fill in the details for your source manually. You can attach a file to append its content.
+                Fill in the details for your source. You can paste text, attach a file, or upload an image.
             </DialogDescription>
             <div className="grid gap-4 py-4">
                 <Input name="title" placeholder="Source Title" value={formData.title} onChange={handleFormChange} />
+                {formData.imageUrl && (
+                    <div className="relative">
+                        <Image src={formData.imageUrl} alt="Attached image" width={500} height={300} className="rounded-md object-contain border max-h-[200px] w-full"/>
+                        <Button variant="destructive" size="icon" onClick={() => setFormData(p => ({...p, imageUrl: ''}))} className="absolute top-2 right-2 h-7 w-7 rounded-full">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
                 <div className="relative">
                     <Textarea name="content" placeholder="Paste or write your source content here..." value={formData.content} onChange={handleFormChange} className="min-h-[120px] pr-28" />
                     <div className="absolute top-2 right-2 flex flex-col gap-2">
@@ -283,8 +339,8 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
                             {isAttaching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
                             Attach
                         </Button>
-                         <input ref={manualFileInputRef} type="file" className="hidden" onChange={(e) => handleManualFileChange(e.target.files)} accept=".pdf,.txt,.md" />
-                        <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || !formData.content}>
+                         <input ref={manualFileInputRef} type="file" className="hidden" onChange={(e) => handleManualFileChange(e.target.files)} accept=".pdf,.txt,.md,image/jpeg,image/png,image/webp" />
+                        <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || (!formData.content && !formData.imageUrl)}>
                             {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                             Summarize
                         </Button>
@@ -319,7 +375,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-6">
             <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setInputMethod('upload')}>
                 <FileUp className="w-8 h-8" />
-                <span>Upload Document</span>
+                <span>Upload File</span>
             </Button>
             <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => setInputMethod('form')}>
                 <FileSignature className="w-8 h-8" />
@@ -347,5 +403,3 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     </Dialog>
   );
 }
-
-    

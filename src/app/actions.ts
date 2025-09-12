@@ -8,12 +8,12 @@ import { processDocumentSource, ProcessDocumentSourceOutput } from '@/ai/flows/p
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export async function getSummaryAction(content: string): Promise<{ summary: string; error?: string }> {
-  if (!content) {
-    return { summary: '', error: 'Content is empty.' };
+export async function getSummaryAction(content: string, imageUrl?: string): Promise<{ summary: string; error?: string }> {
+  if (!content && !imageUrl) {
+    return { summary: '', error: 'Content and image are empty.' };
   }
   try {
-    const result = await summarizeLongInput({ content });
+    const result = await summarizeLongInput({ content, imageUrl });
     return { summary: result.summary };
   } catch (error) {
     console.error('Error generating summary:', error);
@@ -51,13 +51,14 @@ export async function generateNewsletterAction(
 }
 
 export async function processFileUploadAction(
-  documentContent: string
+  documentContent: string,
+  imageUrl?: string
 ): Promise<{ processedSource?: ProcessDocumentSourceOutput; error?: string }> {
-  if (!documentContent) {
+  if (!documentContent && !imageUrl) {
     return { error: 'Could not extract text from the file.' };
   }
   try {
-    const result = await processDocumentSource({ documentContent });
+    const result = await processDocumentSource({ documentContent, imageUrl });
 
     // Save to Firestore
     await addDoc(collection(db, "newsletterCollection"), {

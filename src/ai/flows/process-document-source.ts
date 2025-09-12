@@ -16,6 +16,9 @@ import { CATEGORIES, Category } from '@/lib/types';
 
 const ProcessDocumentSourceInputSchema = z.object({
   documentContent: z.string().describe('The full text content of the uploaded document.'),
+  imageUrl: z.string().optional().describe(
+    "An optional image associated with the document, as a data URI. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
 export type ProcessDocumentSourceInput = z.infer<typeof ProcessDocumentSourceInputSchema>;
 
@@ -24,6 +27,7 @@ const ProcessDocumentSourceOutputSchema = z.object({
   summary: z.string().describe('A detailed summary that captures all the necessary and key information from the document.'),
   category: z.enum(CATEGORIES).describe('The most relevant category for the document.'),
   content: z.string().describe('The original content of the document.'),
+  imageUrl: z.string().optional().describe('The data URI of the associated image, if provided.'),
 });
 export type ProcessDocumentSourceOutput = z.infer<typeof ProcessDocumentSourceOutputSchema>;
 
@@ -39,12 +43,17 @@ const prompt = ai.definePrompt({
   output: {schema: ProcessDocumentSourceOutputSchema},
   prompt: `You are an expert at analyzing and categorizing business documents.
     
-    Read the following document content and perform these tasks:
+    Read the following document content and analyze the associated image (if provided). Then, perform these tasks:
     1.  Create a concise, descriptive title for the document.
-    2.  Write a detailed summary that captures all the necessary and key information from the document.
+    2.  Write a detailed summary that captures all the necessary and key information from the document and image.
     3.  Assign the most appropriate category from the following list: ${CATEGORIES.join(', ')}.
-    4.  Return the original content.
+    4.  Return the original content and image URL.
 
+    {{#if imageUrl}}
+    Image:
+    {{media url=imageUrl}}
+    {{/if}}
+    
     Document Content:
     {{{documentContent}}}
     `,
@@ -58,6 +67,6 @@ const processDocumentSourceFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await prompt(input);
-    return {...output!, content: input.documentContent};
+    return {...output!, content: input.documentContent, imageUrl: input.imageUrl};
   }
 );

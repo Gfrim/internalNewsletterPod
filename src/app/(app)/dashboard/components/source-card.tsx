@@ -31,6 +31,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 interface SourceCardProps {
   source: Source;
@@ -87,10 +88,21 @@ export function SourceCard({ source }: SourceCardProps) {
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{source.title}</DialogTitle>
-              <DialogDescription>AI-generated summary</DialogDescription>
+              <DialogDescription>AI-generated summary based on the provided content and/or image.</DialogDescription>
             </DialogHeader>
-            <div className="mt-4 max-h-[60vh] overflow-y-auto pr-4">
+            <div className="mt-4 max-h-[70vh] overflow-y-auto pr-4 space-y-4">
+              {source.imageUrl && (
+                  <div className="relative w-full">
+                    <Image src={source.imageUrl} alt={source.title} width={800} height={400} className="rounded-md object-contain border w-full" />
+                  </div>
+              )}
               <p className="text-sm whitespace-pre-wrap">{source.summary}</p>
+              {source.content && (
+                <>
+                    <h3 className="text-lg font-semibold mt-6">Original Content</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{source.content}</p>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
