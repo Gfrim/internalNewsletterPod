@@ -102,7 +102,7 @@ export default function QAPage() {
               )}
               <div
                 className={cn(
-                  'max-w-xl rounded-lg px-4 py-2',
+                  'max-w-xl md:max-w-3xl rounded-lg px-4 py-2',
                   m.role === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
