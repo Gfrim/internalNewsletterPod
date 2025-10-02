@@ -39,15 +39,16 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateNewsletterDraftInputSchema},
   output: {schema: GenerateNewsletterDraftOutputSchema},
   prompt: `You are an expert internal communications editor tasked with creating a draft for a company newsletter.
-Your goal is to synthesize the provided content into a single, cohesive, and well-organized newsletter document.
+Your goal is to synthesize all the provided content into a single, cohesive, and well-organized newsletter document. Do not create separate newsletters for each source.
 
 **Instructions:**
 
 1.  **Use the provided title:** Start the newsletter with the title "{{{newsletterTitle}}}".
 2.  **Group content by category:** Organize the items under clear headings based on their 'category' (e.g., "Key Wins", "Recent Challenges", "Project Updates").
-3.  **Format consistently:** For each item, use its 'title' as a sub-heading and its 'summary' as the body paragraph.
-4.  **Create a unified document:** Do not create separate newsletters. Combine all selected content into one single draft.
-5.  **Output in Markdown:** Use Markdown for formatting (e.g., '#' for the main title, '##' for category headings, '###' for item titles).
+3.  **Write a brief intro for each category:** Before listing the items in a category, write a short sentence to introduce the section.
+4.  **Format consistently:** For each item, use its 'title' as a sub-heading and its 'summary' as the body paragraph.
+5.  **Create one unified document:** Combine all selected content into one single draft. Ensure the final output reads like a single, connected document.
+6.  **Output in Markdown:** Use Markdown for formatting (e.g., '#' for the main title, '##' for category headings, '###' for item titles).
 
 **Content to Include:**
 {{#each selectedContent}}
@@ -56,7 +57,7 @@ Your goal is to synthesize the provided content into a single, cohesive, and wel
   - **Summary:** {{{this.summary}}}
 {{/each}}
 
-Begin the draft now.
+Begin the single, combined newsletter draft now.
 `,
 });
 
