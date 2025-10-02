@@ -96,10 +96,11 @@ export function SourceCard({ source }: SourceCardProps) {
                     <Image src={source.imageUrl} alt={source.title} width={800} height={400} className="rounded-md object-contain border w-full" />
                   </div>
               )}
-              <p className="text-sm whitespace-pre-wrap">{source.summary}</p>
+              <p className="text-sm font-semibold text-foreground">Summary</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{source.summary}</p>
               {source.content && (
                 <>
-                    <h3 className="text-lg font-semibold mt-6">Original Content</h3>
+                    <h3 className="text-lg font-semibold mt-6 border-t pt-4">Original Content</h3>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{source.content}</p>
                 </>
               )}

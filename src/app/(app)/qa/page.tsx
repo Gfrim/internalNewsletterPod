@@ -51,6 +51,10 @@ export default function QAPage() {
           if (s.url) {
             sourceText += `\nURL: ${s.url}`;
           }
+           if (s.imageUrl) {
+            // Note: The AI won't "see" the image, but it will know a relevant one exists.
+            sourceText += `\n(Contains an associated image: ${s.title} Image)`;
+          }
           return sourceText;
         })
         .join('\n\n---\n\n');
