@@ -49,11 +49,11 @@ export default function QAPage() {
     try {
       const allContent = sources
         .map((s) => {
-          let sourceText = `Title: ${s.title}\nContent: ${s.content || ''}`;
+          let sourceText = `Title: ${s.title}\nContent: ${s.summary}`; // Use summary for context
           if (s.url) {
             sourceText += `\nURL: ${s.url}`;
           }
-           if (s.imageUrl) {
+          if (s.imageUrl) {
             sourceText += `\nimageUrl: ${s.imageUrl}`;
           }
           return sourceText;
