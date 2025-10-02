@@ -18,7 +18,6 @@ interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
-  imageUrl?: string;
 }
 
 export default function QAPage() {
@@ -60,7 +59,7 @@ export default function QAPage() {
         })
         .join('\n\n---\n\n');
       
-      const { answer, imageUrl, error } = await getAnswerAction(input, allContent);
+      const { answer, error } = await getAnswerAction(input, allContent);
 
       if (error) {
         toast({
@@ -71,7 +70,7 @@ export default function QAPage() {
         const errorMessage: Message = { id: crypto.randomUUID(), role: 'assistant', text: error };
         setMessages((prev) => [...prev, errorMessage]);
       } else {
-        const assistantMessage: Message = { id: crypto.randomUUID(), role: 'assistant', text: answer, imageUrl };
+        const assistantMessage: Message = { id: crypto.randomUUID(), role: 'assistant', text: answer };
         setMessages((prev) => [...prev, assistantMessage]);
       }
     } catch (err) {
@@ -124,11 +123,6 @@ export default function QAPage() {
                     )}
                 >
                     <p className="text-sm whitespace-pre-wrap">{m.text}</p>
-                    {m.imageUrl && (
-                        <div className="relative mt-2">
-                           <Image src={m.imageUrl} alt="AI response image" width={400} height={300} className="rounded-md object-contain border max-h-[300px]" />
-                        </div>
-                    )}
                 </div>
                 </div>
             ))}
