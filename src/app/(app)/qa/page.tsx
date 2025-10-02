@@ -52,9 +52,6 @@ export default function QAPage() {
           if (s.url) {
             sourceText += `\nURL: ${s.url}`;
           }
-          if (s.imageUrl) {
-            sourceText += `\nimageUrl: ${s.imageUrl}`;
-          }
           return sourceText;
         })
         .join('\n\n---\n\n');
