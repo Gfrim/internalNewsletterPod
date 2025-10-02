@@ -12,11 +12,13 @@ import { getAnswerAction } from '@/app/actions';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useSource } from '@/context/source-context';
+import Image from 'next/image';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  imageUrl?: string;
 }
 
 export default function QAPage() {
@@ -47,19 +49,18 @@ export default function QAPage() {
     try {
       const allContent = sources
         .map((s) => {
-          let sourceText = `Title: ${s.title}\nContent: ${s.content}`;
+          let sourceText = `Title: ${s.title}\nContent: ${s.content || ''}`;
           if (s.url) {
             sourceText += `\nURL: ${s.url}`;
           }
            if (s.imageUrl) {
-            // Note: The AI won't "see" the image, but it will know a relevant one exists.
-            sourceText += `\n(Contains an associated image: ${s.title} Image)`;
+            sourceText += `\nimageUrl: ${s.imageUrl}`;
           }
           return sourceText;
         })
         .join('\n\n---\n\n');
       
-      const { answer, error } = await getAnswerAction(input, allContent);
+      const { answer, imageUrl, error } = await getAnswerAction(input, allContent);
 
       if (error) {
         toast({
@@ -70,7 +71,7 @@ export default function QAPage() {
         const errorMessage: Message = { id: crypto.randomUUID(), role: 'assistant', text: error };
         setMessages((prev) => [...prev, errorMessage]);
       } else {
-        const assistantMessage: Message = { id: crypto.randomUUID(), role: 'assistant', text: answer };
+        const assistantMessage: Message = { id: crypto.randomUUID(), role: 'assistant', text: answer, imageUrl };
         setMessages((prev) => [...prev, assistantMessage]);
       }
     } catch (err) {
@@ -116,13 +117,18 @@ export default function QAPage() {
                 )}
                 <div
                     className={cn(
-                    'max-w-3xl rounded-lg px-4 py-2',
+                    'max-w-3xl rounded-lg px-4 py-2 flex flex-col gap-2',
                     m.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     )}
                 >
                     <p className="text-sm whitespace-pre-wrap">{m.text}</p>
+                    {m.imageUrl && (
+                        <div className="relative mt-2">
+                           <Image src={m.imageUrl} alt="AI response image" width={400} height={300} className="rounded-md object-contain border max-h-[300px]" />
+                        </div>
+                    )}
                 </div>
                 </div>
             ))}

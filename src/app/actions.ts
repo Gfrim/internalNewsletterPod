@@ -21,13 +21,13 @@ export async function getSummaryAction(content: string, imageUrl?: string): Prom
   }
 }
 
-export async function getAnswerAction(question: string, context: string): Promise<{ answer: string; error?: string }> {
+export async function getAnswerAction(question: string, context: string): Promise<{ answer: string; imageUrl?: string; error?: string }> {
   if (!question || !context) {
     return { answer: '', error: 'Missing question or context.' };
   }
   try {
     const result = await answerQuestionsAboutContent({ question, content: context });
-    return { answer: result.answer };
+    return { answer: result.answer, imageUrl: result.imageUrl };
   } catch (error) {
     console.error('Error getting answer:', error);
     return { answer: '', error: 'I was unable to find an answer. Please try rephrasing your question.' };
