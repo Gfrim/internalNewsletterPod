@@ -25,7 +25,7 @@ const GenerateNewsletterDraftInputSchema = z.object({
 export type GenerateNewsletterDraftInput = z.infer<typeof GenerateNewsletterDraftInputSchema>;
 
 const GenerateNewsletterDraftOutputSchema = z.object({
-  draftNewsletter: z.string().describe('The generated draft newsletter.'),
+  draftNewsletter: z.string().describe('The generated draft newsletter in Markdown format.'),
 });
 
 export type GenerateNewsletterDraftOutput = z.infer<typeof GenerateNewsletterDraftOutputSchema>;
@@ -38,18 +38,26 @@ const prompt = ai.definePrompt({
   name: 'generateNewsletterDraftPrompt',
   input: {schema: GenerateNewsletterDraftInputSchema},
   output: {schema: GenerateNewsletterDraftOutputSchema},
-  prompt: `You are an expert newsletter writer.
+  prompt: `You are an expert internal communications editor tasked with creating a draft for a company newsletter.
+Your goal is to synthesize the provided content into a single, cohesive, and well-organized newsletter document.
 
-  Using the selected content provided, generate a draft newsletter with the title "{{{newsletterTitle}}}".  Organize the content by category.
+**Instructions:**
 
-  Here is the content:
-  {{#each selectedContent}}
-    Category: {{{this.category}}}
-    Title: {{{this.title}}}
-    Summary: {{{this.summary}}}
+1.  **Use the provided title:** Start the newsletter with the title "{{{newsletterTitle}}}".
+2.  **Group content by category:** Organize the items under clear headings based on their 'category' (e.g., "Key Wins", "Recent Challenges", "Project Updates").
+3.  **Format consistently:** For each item, use its 'title' as a sub-heading and its 'summary' as the body paragraph.
+4.  **Create a unified document:** Do not create separate newsletters. Combine all selected content into one single draft.
+5.  **Output in Markdown:** Use Markdown for formatting (e.g., '#' for the main title, '##' for category headings, '###' for item titles).
 
-  {{/each}}
-  `,
+**Content to Include:**
+{{#each selectedContent}}
+- **Category:** {{{this.category}}}
+  - **Title:** {{{this.title}}}
+  - **Summary:** {{{this.summary}}}
+{{/each}}
+
+Begin the draft now.
+`,
 });
 
 const generateNewsletterDraftFlow = ai.defineFlow(
