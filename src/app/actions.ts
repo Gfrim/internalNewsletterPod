@@ -62,7 +62,11 @@ export async function processFileUploadAction(
 
     // Save to Firestore
     await addDoc(collection(db, "newsletterCollection"), {
-        ...result,
+        title: result.title,
+        summary: result.summary,
+        category: result.category,
+        content: result.content,
+        imageUrl: result.imageUrl,
         createdAt: new Date().toISOString(),
     });
 
