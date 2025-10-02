@@ -66,7 +66,8 @@ export async function processFileUploadAction(
         summary: result.summary,
         category: result.category,
         content: result.content,
-        imageUrl: result.imageUrl,
+        // Conditionally add imageUrl only if it exists
+        ...(result.imageUrl && { imageUrl: result.imageUrl }),
         createdAt: new Date().toISOString(),
     });
 
