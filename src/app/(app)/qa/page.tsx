@@ -45,7 +45,16 @@ export default function QAPage() {
     setIsLoading(true);
 
     try {
-      const allContent = sources.map((s) => `Title: ${s.title}\nContent: ${s.content}`).join('\n\n---\n\n');
+      const allContent = sources
+        .map((s) => {
+          let sourceText = `Title: ${s.title}\nContent: ${s.content}`;
+          if (s.url) {
+            sourceText += `\nURL: ${s.url}`;
+          }
+          return sourceText;
+        })
+        .join('\n\n---\n\n');
+      
       const { answer, error } = await getAnswerAction(input, allContent);
 
       if (error) {
@@ -103,7 +112,7 @@ export default function QAPage() {
                 )}
                 <div
                     className={cn(
-                    'max-w-2xl rounded-lg px-4 py-2',
+                    'max-w-3xl rounded-lg px-4 py-2',
                     m.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'

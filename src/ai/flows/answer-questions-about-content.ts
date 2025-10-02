@@ -14,7 +14,7 @@ import {z} from 'genkit';
 
 const AnswerQuestionsAboutContentInputSchema = z.object({
   question: z.string().describe('The question to answer about the content.'),
-  content: z.string().describe('The aggregated content to answer the question from.'),
+  content: z.string().describe('The aggregated content to answer the question from. Each source may include a Title, Content, and a URL.'),
 });
 export type AnswerQuestionsAboutContentInput = z.infer<typeof AnswerQuestionsAboutContentInputSchema>;
 
@@ -33,7 +33,16 @@ const prompt = ai.definePrompt({
   name: 'answerQuestionsAboutContentPrompt',
   input: {schema: AnswerQuestionsAboutContentInputSchema},
   output: {schema: AnswerQuestionsAboutContentOutputSchema},
-  prompt: `You are an AI assistant that answers questions based on provided content.\n\nContent: {{{content}}}\n\nQuestion: {{{question}}}\n\nAnswer:`,
+  prompt: `You are an AI assistant that answers questions based on a repository of content.
+Your task is to synthesize an answer from the provided sources.
+If a source has a URL, and the user's question implies they might want a link (e.g., asking "where can I find the document?"), include the URL in your answer.
+
+Content Repository:
+{{{content}}}
+
+Question: {{{question}}}
+
+Synthesized Answer:`,
 });
 
 const answerQuestionsAboutContentFlow = ai.defineFlow(
