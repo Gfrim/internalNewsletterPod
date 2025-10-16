@@ -19,6 +19,9 @@ import {
   FileOutput,
   Cpu,
   Building,
+  BarChart,
+  GitMerge,
+  FlaskConical
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -46,51 +49,35 @@ interface SourceCardProps {
   source: Source;
 }
 
-const categoryIcons: Record<Category, React.ElementType> = {
-  Events: Calendar,
-  Marketing: Briefcase,
-  Operations: Settings,
-  Review: FileCheck,
-  Onboarding: Users,
-  Documentation: BookText,
-  DevOutreach: Code,
-  IT: Server,
-};
-
-const categoryColors: Record<Category, string> = {
-    Events: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800',
-    Marketing: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/50 dark:text-pink-300 dark:border-pink-800',
-    Operations: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/50 dark:text-cyan-300 dark:border-cyan-800',
-    Review: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800',
-    Onboarding: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
-    Documentation: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600',
-    DevOutreach: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800',
-    IT: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
-};
-
 const circleIcons: Record<Circle, React.ElementType> = {
-    Product: ShoppingBag,
-    Engineering: Cpu,
-    Marketing: Target,
-    Sales: Building,
-    Support: Heart,
-    HR: User,
+  Analytics: BarChart,
+  BizDev: Briefcase,
+  Operations: Settings,
+  Events: Calendar,
+  Marketing: Target,
+  Review: FileCheck,
+  Documentation: BookText,
+  Onboarding: Users,
+  Lab: FlaskConical,
+  DevOutreach: Code,
 };
 
 const circleColors: Record<Circle, string> = {
-    Product: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
-    Engineering: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
-    Marketing: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/50 dark:text-pink-300 dark:border-pink-800',
-    Sales: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
-    Support: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
-    HR: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800',
-}
+    Analytics: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800',
+    BizDev: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/50 dark:text-pink-300 dark:border-pink-800',
+    Operations: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/50 dark:text-cyan-300 dark:border-cyan-800',
+    Events: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800',
+    Marketing: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-800',
+    Review: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
+    Documentation: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600',
+    Onboarding: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
+    Lab: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800',
+    DevOutreach: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
+};
 
 
 export function SourceCard({ source }: SourceCardProps) {
-  const CategoryIcon = categoryIcons[source.category] || BookText;
   const CircleIcon = source.circle ? circleIcons[source.circle] || CircleIcon : null;
-
   const timeAgo = formatDistanceToNow(new Date(source.createdAt), { addSuffix: true });
 
   return (
@@ -113,9 +100,8 @@ export function SourceCard({ source }: SourceCardProps) {
       </CardContent>
       <CardFooter className="flex justify-between items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className={`capitalize ${categoryColors[source.category]}`}>
-            <CategoryIcon className="mr-1.5 h-3 w-3" />
-            {source.category}
+            <Badge variant="outline" className="capitalize">
+                {source.category}
             </Badge>
             {source.circle && CircleIcon && (
                 <Badge variant="outline" className={`capitalize ${circleColors[source.circle]}`}>

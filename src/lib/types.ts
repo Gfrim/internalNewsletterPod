@@ -1,9 +1,8 @@
-export const CATEGORIES = ['Events', 'Marketing', 'Operations', 'Review', 'Onboarding', 'Documentation', 'DevOutreach', 'IT'] as const;
 
+export const CATEGORIES = ['internal', 'challenges', 'key activities', 'wins', 'updates', 'general'] as const;
 export type Category = (typeof CATEGORIES)[number];
 
-export const CIRCLES = ['Product', 'Engineering', 'Marketing', 'Sales', 'Support', 'HR'] as const;
-
+export const CIRCLES = ['Analytics', 'BizDev', 'Operations', 'Events', 'Marketing', 'Review', 'Documentation', 'Onboarding', 'Lab', 'DevOutreach'] as const;
 export type Circle = (typeof CIRCLES)[number];
 
 export interface Source {
