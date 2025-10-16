@@ -12,7 +12,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { CATEGORIES, Category } from '@/lib/types';
+import { CATEGORIES, Category, CIRCLES, Circle } from '@/lib/types';
 
 const ProcessDocumentSourceInputSchema = z.object({
   documentContent: z.string().describe('The full text content of the uploaded document.'),
@@ -25,7 +25,8 @@ export type ProcessDocumentSourceInput = z.infer<typeof ProcessDocumentSourceInp
 const ProcessDocumentSourceOutputSchema = z.object({
   title: z.string().describe('A concise and descriptive title for the document.'),
   summary: z.string().describe('A detailed summary that captures all the necessary and key information from the document.'),
-  category: z.enum(CATEGORIES).describe('The most relevant category for the document.'),
+  category: z.enum(CATEGORIES).describe(`The most relevant category for the document, from the list: ${CATEGORIES.join(', ')}`),
+  circle: z.enum(CIRCLES).describe(`The most relevant circle for the document, from the list: ${CIRCLES.join(', ')}`),
   content: z.string().describe('The original content of the document.'),
   imageUrl: z.string().optional().describe('The data URI of the associated image, if provided.'),
 });
@@ -46,8 +47,9 @@ const prompt = ai.definePrompt({
     Read the following document content and analyze the associated image (if provided). Then, perform these tasks:
     1.  Create a concise, descriptive title for the document.
     2.  Write a detailed summary that captures all the necessary and key information from the document and image.
-    3.  Assign the most appropriate category (Circle) from the following list: ${CATEGORIES.join(', ')}.
-    4.  Return the original content and image URL.
+    3.  Assign the most appropriate category from the following list: ${CATEGORIES.join(', ')}.
+    4.  Assign the most appropriate circle from the following list: ${CIRCLES.join(', ')}.
+    5.  Return the original content and image URL.
 
     {{#if imageUrl}}
     Image:

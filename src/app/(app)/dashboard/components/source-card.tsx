@@ -11,6 +11,14 @@ import {
   Server,
   Settings,
   Users,
+  Target,
+  Circle as CircleIcon,
+  ShoppingBag,
+  Heart,
+  User,
+  FileOutput,
+  Cpu,
+  Building,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -19,9 +27,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Category, Source } from '@/lib/types';
+import type { Category, Circle, Source } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -59,9 +68,29 @@ const categoryColors: Record<Category, string> = {
     IT: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
 };
 
+const circleIcons: Record<Circle, React.ElementType> = {
+    Product: ShoppingBag,
+    Engineering: Cpu,
+    Marketing: Target,
+    Sales: Building,
+    Support: Heart,
+    HR: User,
+};
+
+const circleColors: Record<Circle, string> = {
+    Product: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
+    Engineering: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
+    Marketing: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/50 dark:text-pink-300 dark:border-pink-800',
+    Sales: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
+    Support: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
+    HR: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800',
+}
+
 
 export function SourceCard({ source }: SourceCardProps) {
   const CategoryIcon = categoryIcons[source.category] || BookText;
+  const CircleIcon = source.circle ? circleIcons[source.circle] || CircleIcon : null;
+
   const timeAgo = formatDistanceToNow(new Date(source.createdAt), { addSuffix: true });
 
   return (
@@ -82,11 +111,19 @@ export function SourceCard({ source }: SourceCardProps) {
       <CardContent className="flex-1">
         <p className="text-sm text-muted-foreground line-clamp-4">{source.summary}</p>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
-        <Badge variant="outline" className={`capitalize ${categoryColors[source.category]}`}>
-          <CategoryIcon className="mr-1.5 h-3 w-3" />
-          {source.category}
-        </Badge>
+      <CardFooter className="flex justify-between items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className={`capitalize ${categoryColors[source.category]}`}>
+            <CategoryIcon className="mr-1.5 h-3 w-3" />
+            {source.category}
+            </Badge>
+            {source.circle && CircleIcon && (
+                <Badge variant="outline" className={`capitalize ${circleColors[source.circle]}`}>
+                    <CircleIcon className="mr-1.5 h-3 w-3" />
+                    {source.circle}
+                </Badge>
+            )}
+        </div>
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">View Source</Button>

@@ -65,6 +65,7 @@ export async function processFileUploadAction(
         title: result.title,
         summary: result.summary,
         category: result.category,
+        circle: result.circle,
         content: result.content,
         // Conditionally add imageUrl only if it exists
         ...(result.imageUrl && { imageUrl: result.imageUrl }),

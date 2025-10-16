@@ -13,14 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { Category } from '@/lib/types';
+import type { Category, Circle } from '@/lib/types';
 import { processFileUploadAction, getSummaryAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CATEGORIES } from '@/lib/types';
+import { CATEGORIES, CIRCLES } from '@/lib/types';
 import { useSource } from '@/context/source-context';
 import Image from 'next/image';
 
@@ -42,7 +42,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const manualFileInputRef = React.useRef<HTMLInputElement>(null);
   const [inputMethod, setInputMethod] = React.useState<InputMethod>(null);
-  const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, url: '', imageUrl: '' });
+  const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', imageUrl: '' });
   const [summary, setSummary] = React.useState('');
   const [isSummarizing, setIsSummarizing] = React.useState(false);
   const [isAttaching, setIsAttaching] = React.useState(false);
@@ -86,7 +86,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsProcessing(false);
     setFile(null);
     setInputMethod(null);
-    setFormData({ title: '', content: '', category: '' as Category, url: '', imageUrl: '' });
+    setFormData({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', imageUrl: '' });
     setSummary('');
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -110,6 +110,10 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
 
   const handleCategoryChange = (value: Category) => {
     setFormData(prev => ({ ...prev, category: value }));
+  }
+
+  const handleCircleChange = (value: Circle) => {
+    setFormData(prev => ({ ...prev, circle: value }));
   }
 
   const handleGenerateSummary = async () => {
@@ -242,6 +246,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
         title: formData.title,
         content: formData.content,
         category: formData.category,
+        circle: formData.circle,
         url: formData.url,
         summary,
         imageUrl: formData.imageUrl,
@@ -354,8 +359,14 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
                             {CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                         </SelectContent>
                     </Select>
-                    <Input name="url" placeholder="Source URL (optional)" value={formData.url} onChange={handleFormChange} />
+                    <Select onValueChange={handleCircleChange} value={formData.circle}>
+                        <SelectTrigger><SelectValue placeholder="Select circle" /></SelectTrigger>
+                        <SelectContent>
+                            {CIRCLES.map(cir => <SelectItem key={cir} value={cir}>{cir}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                 </div>
+                 <Input name="url" placeholder="Source URL (optional)" value={formData.url} onChange={handleFormChange} />
             </div>
             <DialogFooter className="pt-4">
                 <Button onClick={handleFormSubmit} disabled={isProcessing || !formData.title || !summary}>
