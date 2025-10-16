@@ -51,27 +51,15 @@ export async function generateNewsletterAction(
 }
 
 export async function processFileUploadAction(
-  documentContent: string,
+  documentContent?: string,
   imageUrl?: string
 ): Promise<{ processedSource?: ProcessDocumentSourceOutput; error?: string }> {
   if (!documentContent && !imageUrl) {
-    return { error: 'Could not extract text from the file.' };
+    return { error: 'No content or file provided to process.' };
   }
   try {
+    // This action is now only for AI processing, not saving to DB.
     const result = await processDocumentSource({ documentContent, imageUrl });
-
-    // Save to Firestore
-    await addDoc(collection(db, "newsletterCollection"), {
-        title: result.title,
-        summary: result.summary,
-        category: result.category,
-        circle: result.circle,
-        content: result.content,
-        // Conditionally add imageUrl only if it exists
-        ...(result.imageUrl && { imageUrl: result.imageUrl }),
-        createdAt: new Date().toISOString(),
-    });
-
     return { processedSource: result };
   } catch (error: any) {
     console.error('Error processing document:', error);
