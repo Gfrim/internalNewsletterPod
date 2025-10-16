@@ -25,7 +25,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { useSource } from '@/context/source-context';
 import { cn } from '@/lib/utils';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.worker.min.mjs`;
 
 interface AddSourceDialogProps {
   open: boolean;
