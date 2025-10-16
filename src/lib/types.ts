@@ -15,4 +15,5 @@ export interface Source {
   url?: string;
   createdAt: string;
   imageUrl?: string;
+  contributor?: string;
 }

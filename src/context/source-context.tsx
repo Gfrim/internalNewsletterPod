@@ -44,8 +44,12 @@ export function SourceProvider({ children }: { children: React.ReactNode }) {
 
   const addSource = async (sourceData: Omit<Source, 'id' | 'createdAt'>) => {
     try {
+      // Create a clean object, removing undefined fields
+      const dataToSave = { ...sourceData };
+      Object.keys(dataToSave).forEach(key => (dataToSave as any)[key] === undefined && delete (dataToSave as any)[key]);
+
       await addDoc(collection(db, "newsletterCollection"), {
-        ...sourceData,
+        ...dataToSave,
         createdAt: new Date().toISOString(),
       });
     } catch (error) {

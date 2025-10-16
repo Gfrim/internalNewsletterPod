@@ -21,7 +21,8 @@ import {
   Building,
   BarChart,
   GitMerge,
-  FlaskConical
+  FlaskConical,
+  UserCircle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -44,6 +45,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface SourceCardProps {
   source: Source;
@@ -117,7 +119,14 @@ export function SourceCard({ source }: SourceCardProps) {
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{source.title}</DialogTitle>
-              <DialogDescription>AI-generated summary based on the provided content and/or image.</DialogDescription>
+                {source.contributor && (
+                    <DialogDescription className="flex items-center gap-2 pt-1">
+                      <Avatar className="h-5 w-5">
+                          <AvatarFallback className="text-xs">{source.contributor.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span>Contributed by {source.contributor}</span>
+                    </DialogDescription>
+                )}
             </DialogHeader>
             <div className="mt-4 max-h-[70vh] overflow-y-auto pr-4 space-y-4">
               {source.imageUrl && (

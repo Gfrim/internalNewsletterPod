@@ -42,7 +42,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const manualFileInputRef = React.useRef<HTMLInputElement>(null);
   const [inputMethod, setInputMethod] = React.useState<InputMethod>(null);
-  const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', imageUrl: '' });
+  const [formData, setFormData] = React.useState({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', imageUrl: '', contributor: '' });
   const [summary, setSummary] = React.useState('');
   const [isSummarizing, setIsSummarizing] = React.useState(false);
   const [isAttaching, setIsAttaching] = React.useState(false);
@@ -86,7 +86,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsProcessing(false);
     setFile(null);
     setInputMethod(null);
-    setFormData({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', imageUrl: '' });
+    setFormData({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', imageUrl: '', contributor: '' });
     setSummary('');
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -250,6 +250,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
         url: formData.url,
         summary,
         imageUrl: formData.imageUrl,
+        contributor: formData.contributor,
     });
 
     toast({ title: "Source Added", description: `"${formData.title}" has been added.` });
@@ -367,6 +368,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
                     </Select>
                 </div>
                  <Input name="url" placeholder="Source URL (optional)" value={formData.url} onChange={handleFormChange} />
+                 <Input name="contributor" placeholder="Contributor Name (optional)" value={formData.contributor} onChange={handleFormChange} />
             </div>
             <DialogFooter className="pt-4">
                 <Button onClick={handleFormSubmit} disabled={isProcessing || !formData.title || !summary}>
