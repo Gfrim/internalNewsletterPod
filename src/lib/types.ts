@@ -1,4 +1,4 @@
-export const CATEGORIES = ['wins', 'challenges', 'key activities', 'internal', 'external'] as const;
+export const CATEGORIES = ['Events', 'Marketing', 'Operations', 'Review', 'Onboarding', 'Documentation', 'DevOutreach', 'IT'] as const;
 
 export type Category = (typeof CATEGORIES)[number];
 

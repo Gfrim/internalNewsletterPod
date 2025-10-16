@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
     Read the following document content and analyze the associated image (if provided). Then, perform these tasks:
     1.  Create a concise, descriptive title for the document.
     2.  Write a detailed summary that captures all the necessary and key information from the document and image.
-    3.  Assign the most appropriate category from the following list: ${CATEGORIES.join(', ')}.
+    3.  Assign the most appropriate category (Circle) from the following list: ${CATEGORIES.join(', ')}.
     4.  Return the original content and image URL.
 
     {{#if imageUrl}}
