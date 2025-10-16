@@ -8,12 +8,12 @@ import { processDocumentSource, ProcessDocumentSourceOutput } from '@/ai/flows/p
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-export async function getSummaryAction(content: string, imageUrl?: string): Promise<{ summary: string; error?: string }> {
-  if (!content && !imageUrl) {
-    return { summary: '', error: 'Content and image are empty.' };
+export async function getSummaryAction(content: string): Promise<{ summary: string; error?: string }> {
+  if (!content) {
+    return { summary: '', error: 'Content is empty.' };
   }
   try {
-    const result = await summarizeLongInput({ content, imageUrl });
+    const result = await summarizeLongInput({ content });
     return { summary: result.summary };
   } catch (error) {
     console.error('Error generating summary:', error);
@@ -51,15 +51,13 @@ export async function generateNewsletterAction(
 }
 
 export async function processFileUploadAction(
-  documentContent?: string,
-  imageUrl?: string
+  fileContent: string
 ): Promise<{ processedSource?: ProcessDocumentSourceOutput; error?: string }> {
-  if (!documentContent && !imageUrl) {
-    return { error: 'No content or file provided to process.' };
+  if (!fileContent) {
+    return { error: 'No file content provided to process.' };
   }
   try {
-    // This action is now only for AI processing, not saving to DB.
-    const result = await processDocumentSource({ documentContent, imageUrl });
+    const result = await processDocumentSource({ documentContent: fileContent });
     return { processedSource: result };
   } catch (error: any) {
     console.error('Error processing document:', error);
