@@ -187,7 +187,11 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     try {
         if (manualFile) {
             const fileText = await extractTextFromFile(manualFile);
-            combinedContent += `\n\n--- Attached File Content ---\n\n${fileText}`;
+            if(combinedContent.trim()) {
+                combinedContent += `\n\n--- Attached File Content ---\n\n${fileText}`;
+            } else {
+                combinedContent = fileText;
+            }
         }
 
         if (!combinedContent.trim()) {
@@ -218,7 +222,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
 
     if (activeTab === 'manual') {
       if (!manualForm.title || !manualForm.category || !manualSummary) {
-        toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please fill out title, category, and generate a summary.' });
+        toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please provide a title, select a category, and generate a summary before adding.' });
         setIsProcessing(false);
         return;
       }
@@ -260,7 +264,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
             <div className="grid gap-4 py-4">
               <Input name="title" placeholder="Source Title" value={manualForm.title} onChange={handleManualFormChange} />
               <div className="relative">
-                <Textarea name="content" placeholder="Paste or write your source content here..." value={manualForm.content} onChange={handleManualFormChange} className={cn("min-h-[120px]", manualFile ? 'pb-10' : '')} />
+                <Textarea name="content" placeholder="Paste or write your source content here (optional if attaching a file)..." value={manualForm.content} onChange={handleManualFormChange} className={cn("min-h-[120px]", manualFile ? 'pb-10' : '')} />
                 <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || (!manualForm.content && !manualFile)} className="absolute bottom-2 right-2">
                   {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   Summarize
@@ -358,5 +362,3 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     </Dialog>
   );
 }
-
-    
