@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Plus, Sparkles, Upload, X } from 'lucide-react';
+import { Loader2, Plus, Sparkles, Upload, X, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CATEGORIES, CIRCLES } from '@/lib/types';
 import * as pdfjsLib from 'pdfjs-dist';
 import { useSource } from '@/context/source-context';
+import { cn } from '@/lib/utils';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -30,6 +31,42 @@ interface AddSourceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// Helper to extract text from various file types
+async function extractTextFromFile(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        if (file.type === 'application/pdf') {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                if (event.target?.result) {
+                    try {
+                        const pdf = await pdfjsLib.getDocument({ data: event.target.result as ArrayBuffer }).promise;
+                        let content = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            content += textContent.items.map(item => (item as any).str).join(' ');
+                        }
+                        resolve(content);
+                    } catch (e) {
+                        console.error("Error parsing PDF", e);
+                        reject('Could not parse the PDF file.');
+                    }
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else if (file.type === 'text/plain' || file.type === 'text/markdown') {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                resolve(event.target?.result as string);
+            };
+            reader.readAsText(file);
+        } else {
+            reject('Unsupported file type. Please upload a PDF, TXT, or MD file.');
+        }
+    });
+}
+
 
 export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -39,6 +76,8 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   // Manual form state
   const [manualForm, setManualForm] = React.useState({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', contributor: '' });
   const [manualSummary, setManualSummary] = React.useState('');
+  const [manualFile, setManualFile] = React.useState<File | null>(null);
+
 
   // File upload state
   const [file, setFile] = React.useState<File | null>(null);
@@ -52,6 +91,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsSummarizing(false);
     setManualForm({ title: '', content: '', category: '' as Category, circle: '' as Circle, url: '', contributor: '' });
     setManualSummary('');
+    setManualFile(null);
     setFile(null);
     setFileInfo(null);
   }
@@ -75,6 +115,21 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const handleManualCircleChange = (value: Circle) => {
     setManualForm(prev => ({ ...prev, circle: value }));
   }
+  
+  const handleManualFileChange = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      if (selectedFile.size > 1 * 1024 * 1024) {
+        toast({
+          variant: 'destructive',
+          title: 'File too large',
+          description: 'Please upload files under 1MB.',
+        });
+        return;
+      }
+      setManualFile(selectedFile);
+    }
+  };
 
   const handleFileChange = (files: FileList | null) => {
     if (files && files.length > 0) {
@@ -96,39 +151,12 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   const handleProcessFile = async () => {
     if (!file) return;
     setIsProcessing(true);
-    let fileText = '';
-
-    if (file.type === 'application/pdf') {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            if (event.target?.result) {
-                try {
-                    const pdf = await pdfjsLib.getDocument({ data: event.target.result as ArrayBuffer }).promise;
-                    let content = '';
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        content += textContent.items.map(item => (item as any).str).join(' ');
-                    }
-                    fileText = content;
-                    processTextContent(fileText);
-                } catch (e) {
-                    console.error("Error parsing PDF", e);
-                    toast({ variant: 'destructive', title: 'PDF Error', description: 'Could not parse the PDF file.' });
-                    setIsProcessing(false);
-                }
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    } else if (file.type === 'text/plain' || file.type === 'text/markdown') {
-        fileText = await file.text();
+    
+    try {
+        const fileText = await extractTextFromFile(file);
         processTextContent(fileText);
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'Unsupported File Type',
-            description: 'Please upload a PDF, TXT, or MD file.',
-        });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'File Error', description: error });
         setIsProcessing(false);
     }
   };
@@ -153,17 +181,36 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
   }
 
   const handleGenerateSummary = async () => {
-    if (!manualForm.content) return;
+    let combinedContent = manualForm.content;
     setIsSummarizing(true);
-    const { summary, error } = await getSummaryAction(manualForm.content);
-    if (error) {
-      toast({ variant: 'destructive', title: 'Summarization Failed', description: error });
-    } else {
-      setManualSummary(summary);
-      toast({ title: 'Summary Generated!', description: 'The AI has summarized your content.' });
+    
+    try {
+        if (manualFile) {
+            const fileText = await extractTextFromFile(manualFile);
+            combinedContent += `\n\n--- Attached File Content ---\n\n${fileText}`;
+        }
+
+        if (!combinedContent.trim()) {
+            toast({ variant: 'destructive', title: 'No Content', description: 'Please provide content or attach a file to summarize.' });
+            setIsSummarizing(false);
+            return;
+        }
+
+        const { summary, error } = await getSummaryAction(combinedContent);
+        if (error) {
+            toast({ variant: 'destructive', title: 'Summarization Failed', description: error });
+        } else {
+            setManualSummary(summary);
+            setManualForm(prev => ({...prev, content: combinedContent})); // Save combined content
+            toast({ title: 'Summary Generated!', description: 'The AI has summarized your content.' });
+        }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error processing file', description: error });
+    } finally {
+        setIsSummarizing(false);
     }
-    setIsSummarizing(false);
   }
+
 
   async function handleFormSubmit() {
     setIsProcessing(true);
@@ -213,12 +260,34 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
             <div className="grid gap-4 py-4">
               <Input name="title" placeholder="Source Title" value={manualForm.title} onChange={handleManualFormChange} />
               <div className="relative">
-                <Textarea name="content" placeholder="Paste or write your source content here..." value={manualForm.content} onChange={handleManualFormChange} className="min-h-[120px]" />
-                <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || !manualForm.content} className="absolute bottom-2 right-2">
+                <Textarea name="content" placeholder="Paste or write your source content here..." value={manualForm.content} onChange={handleManualFormChange} className={cn("min-h-[120px]", manualFile ? 'pb-10' : '')} />
+                <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || (!manualForm.content && !manualFile)} className="absolute bottom-2 right-2">
                   {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   Summarize
                 </Button>
               </div>
+
+               {/* Manual File Attachment */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="manual-file-input" className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-primary">
+                    <Paperclip className="h-4 w-4" />
+                    <span>{manualFile ? manualFile.name : "Attach a file..."}</span>
+                </label>
+                <Input
+                  id="manual-file-input"
+                  type="file"
+                  onChange={(e) => handleManualFileChange(e.target.files)}
+                  accept=".pdf,.txt,.md"
+                  className="sr-only"
+                  disabled={isSummarizing}
+                />
+                {manualFile && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setManualFile(null)}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                )}
+              </div>
+
               <Textarea name="summary" placeholder="AI-generated or manual summary will appear here." value={manualSummary} onChange={(e) => setManualSummary(e.target.value)} />
               <div className="grid grid-cols-2 gap-4">
                   <Select onValueChange={handleManualCategoryChange} value={manualForm.category}>
