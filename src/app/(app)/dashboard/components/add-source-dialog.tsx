@@ -180,53 +180,82 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
     setIsProcessing(false);
   }
 
-  const handleGenerateSummary = async () => {
-    let combinedContent = manualForm.content;
+  const generateSummaryForManual = async () => {
     setIsSummarizing(true);
-    
     try {
-        if (manualFile) {
-            const fileText = await extractTextFromFile(manualFile);
-            if(combinedContent.trim()) {
-                combinedContent += `\n\n--- Attached File Content ---\n\n${fileText}`;
-            } else {
-                combinedContent = fileText;
-            }
-        }
-
-        if (!combinedContent.trim()) {
-            toast({ variant: 'destructive', title: 'No Content', description: 'Please provide content or attach a file to summarize.' });
-            setIsSummarizing(false);
-            return;
-        }
-
-        const { summary, error } = await getSummaryAction(combinedContent);
-        if (error) {
-            toast({ variant: 'destructive', title: 'Summarization Failed', description: error });
+      let combinedContent = manualForm.content;
+      if (manualFile) {
+        const fileText = await extractTextFromFile(manualFile);
+        if (combinedContent.trim()) {
+          combinedContent += `\n\n--- Attached File Content ---\n\n${fileText}`;
         } else {
-            setManualSummary(summary);
-            setManualForm(prev => ({...prev, content: combinedContent})); // Save combined content
-            toast({ title: 'Summary Generated!', description: 'The AI has summarized your content.' });
+          combinedContent = fileText;
         }
+      }
+
+      if (!combinedContent.trim()) {
+        toast({ variant: 'destructive', title: 'No Content', description: 'Please provide content or attach a file to summarize.' });
+        return null;
+      }
+
+      const { summary, error } = await getSummaryAction(combinedContent);
+      if (error) {
+        toast({ variant: 'destructive', title: 'Summarization Failed', description: error });
+        return null;
+      } else {
+        setManualSummary(summary);
+        toast({ title: 'Summary Generated!', description: 'The AI has summarized your content.' });
+        return summary;
+      }
     } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error processing file', description: error });
+      toast({ variant: 'destructive', title: 'Error processing for summary', description: error.message || String(error) });
+      return null;
     } finally {
-        setIsSummarizing(false);
+      setIsSummarizing(false);
     }
   }
 
 
   async function handleFormSubmit() {
     setIsProcessing(true);
+    
     let sourceData;
 
     if (activeTab === 'manual') {
-      if (!manualForm.title || !manualForm.category || !manualSummary) {
-        toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please provide a title, select a category, and generate a summary before adding.' });
+      if (!manualForm.title || !manualForm.category) {
+        toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please provide a title and select a category before adding.' });
         setIsProcessing(false);
         return;
       }
-      sourceData = { ...manualForm, summary: manualSummary };
+      
+      let summaryToSave = manualSummary;
+      if (!summaryToSave) {
+          const generatedSummary = await generateSummaryForManual();
+          if (!generatedSummary) {
+            setIsProcessing(false);
+            return;
+          }
+          summaryToSave = generatedSummary;
+      }
+
+      let contentToSave = manualForm.content;
+      if (manualFile) {
+        try {
+          const fileText = await extractTextFromFile(manualFile);
+           if (contentToSave.trim()) {
+              contentToSave += `\n\n--- Attached File Content ---\n\n${fileText}`;
+            } else {
+              contentToSave = fileText;
+            }
+        } catch (e: any) {
+           toast({ variant: 'destructive', title: 'File Error', description: e.message || "Could not read attached file." });
+           setIsProcessing(false);
+           return;
+        }
+      }
+      
+      sourceData = { ...manualForm, summary: summaryToSave, content: contentToSave };
+
     } else { // File upload tab
       if (!fileInfo) {
         toast({ variant: 'destructive', title: 'File Not Processed', description: 'Please process the file first.' });
@@ -265,7 +294,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
               <Input name="title" placeholder="Source Title" value={manualForm.title} onChange={handleManualFormChange} />
               <div className="relative">
                 <Textarea name="content" placeholder="Paste or write your source content here (optional if attaching a file)..." value={manualForm.content} onChange={handleManualFormChange} className={cn("min-h-[120px]", manualFile ? 'pb-10' : '')} />
-                <Button size="sm" onClick={handleGenerateSummary} disabled={isSummarizing || (!manualForm.content && !manualFile)} className="absolute bottom-2 right-2">
+                <Button size="sm" onClick={generateSummaryForManual} disabled={isSummarizing || (!manualForm.content && !manualFile)} className="absolute bottom-2 right-2">
                   {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   Summarize
                 </Button>
@@ -354,7 +383,7 @@ export function AddSourceDialog({ open, onOpenChange }: AddSourceDialogProps) {
 
         <DialogFooter className="pt-4">
           <Button onClick={handleFormSubmit} disabled={isProcessing || isSummarizing}>
-            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isProcessing || isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Add Source
           </Button>
         </DialogFooter>
