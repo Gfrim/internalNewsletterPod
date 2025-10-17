@@ -1,6 +1,7 @@
-# Automated Content Ingestion for NewsFlash AI
 
-This document outlines how to connect external services like Google Drive and Mattermost to your NewsFlash AI application. The goal is to automate the process of capturing valuable information (meeting notes, transcripts, key conversations) and adding it to your central knowledge repository.
+# Automated Content Ingestion for NewsFlash
+
+This document outlines how to connect external services like Google Drive and Mattermost to your NewsFlash application. The goal is to automate the process of capturing valuable information (meeting notes, transcripts, key conversations) and adding it to your central knowledge repository.
 
 All automations will use the secure `/api/ingest` endpoint built into the application.
 
@@ -8,18 +9,18 @@ All automations will use the secure `/api/ingest` endpoint built into the applic
 
 ## Part 1: Automating Ingestion from Google Drive with n8n
 
-This workflow will automatically fetch new documents from a specific Google Drive folder, extract their content, and send it to NewsFlash AI. This is perfect for centralizing meeting notes, project plans, or any other text-based documents.
+This workflow will automatically fetch new documents from a specific Google Drive folder, extract their content, and send it to NewsFlash. This is perfect for centralizing meeting notes, project plans, or any other text-based documents.
 
 ### **Goal**
 
-- When a new file (e.g., Google Doc, `.txt`, `.md`) is added to a specific folder in Google Drive, automatically create a new source in NewsFlash AI.
+- When a new file (e.g., Google Doc, `.txt`, `.md`) is added to a specific Google Drive folder, automatically create a new source in NewsFlash.
 
 ### **Prerequisites**
 
 1.  An **n8n Instance**: This can be a cloud account or a self-hosted version.
 2.  **Google Credentials**: You'll need to connect your Google account to n8n.
-3.  **NewsFlash AI Credentials**:
-    *   The public URL of your deployed NewsFlash AI application (e.g., `https://your-app.apphosting.dev`).
+3.  **NewsFlash Credentials**:
+    *   The public URL of your deployed NewsFlash application (e.g., `https://your-app.apphosting.dev`).
     *   Your `INGEST_API_KEY` from your `.env.local` file.
 
 ### **Step-by-Step n8n Workflow**
@@ -28,7 +29,7 @@ This workflow consists of three main nodes:
 
 1.  **Google Drive Trigger**: Watches for new files.
 2.  **Google Drive Node**: Downloads the file content.
-3.  **HTTP Request Node**: Sends the content to NewsFlash AI.
+3.  **HTTP Request Node**: Sends the content to NewsFlash.
 
 #### **Step 1: Set Up the Google Drive Trigger Node**
 
@@ -77,13 +78,13 @@ This final node sends the downloaded content to your application's API.
       "url": "{{ $('Google Drive Trigger').item.json.webViewLink }}"
     }
     ```
-8.  **Activate your workflow!** Now, every new document in that folder will be automatically processed and added to your NewsFlash AI.
+8.  **Activate your workflow!** Now, every new document in that folder will be automatically processed and added to your NewsFlash.
 
 ---
 
 ## Part 2: Automating Ingestion from Mattermost
 
-This section describes how to capture important conversations from Mattermost channels and add them to NewsFlash AI.
+This section describes how to capture important conversations from Mattermost channels and add them to NewsFlash.
 
 ### **Strategy: Use a Mattermost Bot and a Background Service**
 
@@ -91,7 +92,7 @@ The most robust method is to create a Mattermost Bot that runs as a background s
 
 ### **Goal**
 
-- Periodically read all new messages from specific Mattermost channels and ingest them into NewsFlash AI.
+- Periodically read all new messages from specific Mattermost channels and ingest them into NewsFlash.
 
 ### **Prerequisites**
 
@@ -129,7 +130,7 @@ Your service will execute the following logic on a schedule (e.g., every 30 minu
 
 3.  **Process and Ingest Posts**:
     *   For each post retrieved, format its content as needed. You might want to prepend it with the user's name and the timestamp.
-    *   Make a `POST` request to your NewsFlash AI's `/api/ingest` endpoint for each message (or batch them together).
+    *   Make a `POST` request to your NewsFlash's `/api/ingest` endpoint for each message (or batch them together).
     *   **Request Body**:
         ```json
         {
@@ -137,4 +138,4 @@ Your service will execute the following logic on a schedule (e.g., every 30 minu
         }
         ```
 
-This polling mechanism ensures you capture all relevant conversations and make them searchable and summarizable within your NewsFlash AI knowledge base.
+This polling mechanism ensures you capture all relevant conversations and make them searchable and summarizable within your NewsFlash knowledge base.

@@ -54,7 +54,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3">
           <Logo className="size-8 text-primary" />
           <div className={cn("flex flex-col", state === 'collapsed' && 'hidden')}>
-            <span className="font-semibold text-lg tracking-tight font-headline">NewsFlash AI</span>
+            <span className="font-semibold text-lg tracking-tight font-headline">NewsFlash</span>
           </div>
         </div>
          <div className={cn(state !== 'collapsed' && "hidden", "md:block")}>

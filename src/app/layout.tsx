@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'NewsFlash AI',
+  title: 'NewsFlash',
   description: 'AI-powered knowledge hub for newsletter creation.',
 };
 

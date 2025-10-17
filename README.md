@@ -1,7 +1,7 @@
 
-# NewsFlash AI
+# NewsFlash
 
-NewsFlash AI is an AI-powered knowledge hub designed to streamline the newsletter creation process for teams like the Marketing Circle. It centralizes information from various sources into a **persistent Firestore database**, uses generative AI to summarize content, and provides powerful search and Q&A capabilities to help you find newsworthy updates quickly.
+NewsFlash is an AI-powered knowledge hub designed to streamline the newsletter creation process for teams like the Marketing Circle. It centralizes information from various sources into a **persistent Firestore database**, uses generative AI to summarize content, and provides powerful search and Q&A capabilities to help you find newsworthy updates quickly.
 
 ## Vision & Purpose
 
@@ -42,7 +42,7 @@ Compile a draft newsletter in minutes. This tool lets you select relevant source
 
 ### 4. Automated Ingestion via API (for `n8n`, `Zapier`, etc.)
 
-To fully automate your information-gathering process, NewsFlash AI includes a secure API endpoint for programmatic ingestion. This is perfect for connecting to services like `n8n` or `Zapier` to automatically add content from sources like Google Drive.
+To fully automate your information-gathering process, NewsFlash includes a secure API endpoint for programmatic ingestion. This is perfect for connecting to services like `n8n` or `Zapier` to automatically add content from sources like Google Drive.
 
 - **Endpoint**: `POST /api/ingest`
 - **Authentication**: `Authorization: Bearer <YOUR_API_KEY>`
