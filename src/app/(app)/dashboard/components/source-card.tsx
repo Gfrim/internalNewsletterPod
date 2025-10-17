@@ -22,7 +22,12 @@ import {
   BarChart,
   GitMerge,
   FlaskConical,
-  UserCircle
+  UserCircle,
+  Activity,
+  AlertTriangle,
+  Lightbulb,
+  Trophy,
+  Info
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -78,8 +83,27 @@ const circleColors: Record<Circle, string> = {
 };
 
 
+const categoryColors: Record<Category, string> = {
+    internal: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800',
+    challenges: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800',
+    'key activities': 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800',
+    wins: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800',
+    updates: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800',
+    general: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600',
+};
+
+const categoryIcons: Record<Category, React.ElementType> = {
+    internal: Info,
+    challenges: AlertTriangle,
+    'key activities': Activity,
+    wins: Trophy,
+    updates: Lightbulb,
+    general: BookText,
+};
+
 export function SourceCard({ source }: SourceCardProps) {
   const CircleIcon = source.circle ? circleIcons[source.circle] || CircleIcon : null;
+  const CategoryIcon = source.category ? categoryIcons[source.category] : null;
   const timeAgo = formatDistanceToNow(new Date(source.createdAt), { addSuffix: true });
 
   return (
@@ -102,7 +126,8 @@ export function SourceCard({ source }: SourceCardProps) {
       </CardContent>
       <CardFooter className="flex justify-between items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="capitalize">
+            <Badge variant="outline" className={`capitalize ${categoryColors[source.category]}`}>
+                {CategoryIcon && <CategoryIcon className="mr-1.5 h-3 w-3" />}
                 {source.category}
             </Badge>
             {source.circle && CircleIcon && (
