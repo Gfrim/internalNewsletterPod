@@ -18,8 +18,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
+  SidebarTrigger
 } from '@/components/ui/sidebar';
-import { useSidebar } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ThemeToggle } from '../theme-toggle';
@@ -30,9 +31,18 @@ const navItems = [
   { href: '/newsletter', icon: Newspaper, label: 'Newsletter' },
 ];
 
+export function AppSidebarTrigger() {
+    return <SidebarTrigger />;
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    // Close the sidebar on mobile when a link is clicked
+    setOpenMobile(false);
+  }
 
   return (
     <Sidebar
@@ -40,20 +50,23 @@ export function AppSidebar() {
       variant="sidebar"
       collapsible="icon"
     >
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Logo className="size-8 text-primary" />
           <div className={cn("flex flex-col", state === 'collapsed' && 'hidden')}>
             <span className="font-semibold text-lg tracking-tight font-headline">NewsFlash AI</span>
           </div>
         </div>
+         <div className={cn(state !== 'collapsed' && "hidden", "md:block")}>
+             <SidebarTrigger />
+         </div>
       </SidebarHeader>
 
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref>
+              <Link href={item.href} passHref onClick={handleLinkClick}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
