@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/page-header';
@@ -12,6 +12,11 @@ import { SourceCard } from './components/source-card';
 import { useSource } from '@/context/source-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES, CIRCLES } from '@/lib/types';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 export default function DashboardPage() {
   const { sources, loading } = useSource();
@@ -19,6 +24,7 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = React.useState('all');
   const [selectedCircle, setSelectedCircle] = React.useState('all');
   const [selectedContributor, setSelectedContributor] = React.useState('all');
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
   const contributors = React.useMemo(() => {
@@ -27,12 +33,17 @@ export default function DashboardPage() {
   }, [sources]);
 
   const filteredSources = sources.filter(
-    (source) =>
-      (source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      source.summary.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      (selectedCategory === 'all' || source.category === selectedCategory) &&
-      (selectedCircle === 'all' || source.circle === selectedCircle) &&
-      (selectedContributor === 'all' || source.contributor === selectedContributor)
+    (source) => {
+        const sourceDate = new Date(source.createdAt);
+        const isDateInRange = !dateRange?.from || !dateRange?.to || isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) });
+
+        return (source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        source.summary.toLowerCase().includes(searchQuery.toLowerCase())) &&
+        (selectedCategory === 'all' || source.category === selectedCategory) &&
+        (selectedCircle === 'all' || source.circle === selectedCircle) &&
+        (selectedContributor === 'all' || source.contributor === selectedContributor) &&
+        isDateInRange
+    }
   );
 
   const renderContent = () => {
@@ -124,6 +135,41 @@ export default function DashboardPage() {
                     {contributors.slice(1).map(con => <SelectItem key={con} value={con} className="capitalize">{con}</SelectItem>)}
                 </SelectContent>
             </Select>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full sm:w-auto min-w-[240px] justify-start text-left font-normal",
+                            !dateRange && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                            dateRange.to ? (
+                                <>
+                                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                                    {format(dateRange.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(dateRange.from, "LLL dd, y")
+                            )
+                        ) : (
+                            <span>Pick a date range</span>
+                        )}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                    />
+                </PopoverContent>
+            </Popover>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {renderContent()}
