@@ -26,6 +26,8 @@ export default function DashboardPage() {
   const [selectedContributor, setSelectedContributor] = React.useState('all');
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 12;
 
   const contributors = React.useMemo(() => {
     const uniqueContributors = new Set(sources.map(s => s.contributor).filter(Boolean));
@@ -35,7 +37,7 @@ export default function DashboardPage() {
   const filteredSources = sources.filter(
     (source) => {
         const sourceDate = new Date(source.createdAt);
-        const isDateInRange = !dateRange?.from || !dateRange?.to || isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) });
+        const isDateInRange = !dateRange?.from || (dateRange.to && isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) }));
 
         return (source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         source.summary.toLowerCase().includes(searchQuery.toLowerCase())) &&
@@ -45,6 +47,25 @@ export default function DashboardPage() {
         isDateInRange
     }
   );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredSources.length / itemsPerPage);
+  const paginatedSources = filteredSources.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+        setCurrentPage(newPage);
+    }
+  }
+
+  React.useEffect(() => {
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedCircle, selectedContributor, dateRange]);
+
 
   const renderContent = () => {
     if (loading) {
@@ -68,8 +89,8 @@ export default function DashboardPage() {
             </div>
         );
     }
-    if (filteredSources.length > 0) {
-        return filteredSources.map((source) => (
+    if (paginatedSources.length > 0) {
+        return paginatedSources.map((source) => (
             <SourceCard key={source.id} source={source} />
         ));
     }
@@ -105,7 +126,7 @@ export default function DashboardPage() {
           </Button>
         </div>
       </PageHeader>
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col">
         <div className="flex flex-wrap items-center gap-4 mb-6">
             <h3 className="text-sm font-medium text-muted-foreground">Filter by:</h3>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -171,9 +192,22 @@ export default function DashboardPage() {
                 </PopoverContent>
             </Popover>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 flex-1">
           {renderContent()}
         </div>
+        {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+                <Button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} variant="outline">
+                    Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                </span>
+                <Button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} variant="outline">
+                    Next
+                </Button>
+            </div>
+        )}
       </main>
 
       <AddSourceDialog
