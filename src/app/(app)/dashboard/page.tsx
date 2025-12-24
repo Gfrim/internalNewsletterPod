@@ -37,7 +37,8 @@ export default function DashboardPage() {
   const filteredSources = sources.filter(
     (source) => {
         const sourceDate = new Date(source.createdAt);
-        const isDateInRange = !dateRange?.from || (dateRange.to && isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) }));
+        const isDateInRange = !dateRange?.from || (dateRange.to ? isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) }) : isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.from) }));
+
 
         return (source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         source.summary.toLowerCase().includes(searchQuery.toLowerCase())) &&
