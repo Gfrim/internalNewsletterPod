@@ -17,6 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
+import { Label } from '@/components/ui/label';
 
 export default function DashboardPage() {
   const { sources, loading } = useSource();
@@ -27,7 +28,7 @@ export default function DashboardPage() {
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const itemsPerPage = 12;
+  const [itemsPerPage, setItemsPerPage] = React.useState(6);
 
   const contributors = React.useMemo(() => {
     const uniqueContributors = new Set(sources.map(s => s.contributor).filter(Boolean));
@@ -65,7 +66,7 @@ export default function DashboardPage() {
   React.useEffect(() => {
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedCircle, selectedContributor, dateRange]);
+  }, [searchQuery, selectedCategory, selectedCircle, selectedContributor, dateRange, itemsPerPage]);
 
 
   const renderContent = () => {
@@ -129,7 +130,7 @@ export default function DashboardPage() {
       </PageHeader>
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col">
         <div className="flex flex-wrap items-center gap-4 mb-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Filter by:</h3>
+            <h3 className="text-sm font-medium text-muted-foreground shrink-0">Filter by:</h3>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full sm:w-auto min-w-[150px]">
                     <SelectValue placeholder="Category" />
@@ -192,8 +193,22 @@ export default function DashboardPage() {
                     />
                 </PopoverContent>
             </Popover>
+             <div className="flex items-center gap-2">
+                <Label htmlFor="items-per-page" className="text-sm font-medium text-muted-foreground">Show:</Label>
+                <Select value={String(itemsPerPage)} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger id="items-per-page" className="w-auto">
+                        <SelectValue placeholder={itemsPerPage} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="6">6</SelectItem>
+                        <SelectItem value="12">12</SelectItem>
+                        <SelectItem value="24">24</SelectItem>
+                        <SelectItem value="48">48</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 flex-1">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 flex-1">
           {renderContent()}
         </div>
         {totalPages > 1 && (
