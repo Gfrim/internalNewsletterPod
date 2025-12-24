@@ -51,6 +51,9 @@ import {
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useSource } from '@/context/source-context';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface SourceCardProps {
   source: Source;
@@ -105,19 +108,36 @@ export function SourceCard({ source }: SourceCardProps) {
   const CircleIcon = source.circle ? circleIcons[source.circle] || CircleIcon : null;
   const CategoryIcon = source.category ? categoryIcons[source.category] : null;
   const timeAgo = formatDistanceToNow(new Date(source.createdAt), { addSuffix: true });
+  const { toggleBookmark } = useSource();
+  const { toast } = useToast();
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newBookmarkState = !source.isBookmarked;
+    toggleBookmark(source.id, newBookmarkState);
+    toast({
+        title: newBookmarkState ? 'Bookmarked!' : 'Bookmark Removed',
+        description: `"${source.title}" has been ${newBookmarkState ? 'added to' : 'removed from'} your newsletter list.`
+    });
+  }
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-start justify-between">
           <span className="text-base font-semibold leading-tight pr-2">{source.title}</span>
-          {source.url && (
-            <a href={source.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
-                    <LinkIcon className="h-4 w-4" />
-                </Button>
-            </a>
-          )}
+          <div className="flex items-center shrink-0">
+             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={handleBookmark}>
+                <Heart className={cn("h-4 w-4", source.isBookmarked && "fill-red-500 text-red-500")} />
+             </Button>
+            {source.url && (
+                <a href={source.url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                        <LinkIcon className="h-4 w-4" />
+                    </Button>
+                </a>
+            )}
+          </div>
         </CardTitle>
         <CardDescription className="text-xs">{timeAgo}</CardDescription>
       </CardHeader>

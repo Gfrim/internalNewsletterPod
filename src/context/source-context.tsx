@@ -4,11 +4,12 @@
 import * as React from 'react';
 import type { Source } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 
 interface SourceContextType {
   sources: Source[];
   addSource: (source: Omit<Source, 'id' | 'createdAt'>) => Promise<void>;
+  toggleBookmark: (sourceId: string, isBookmarked: boolean) => Promise<void>;
   loading: boolean;
 }
 
@@ -57,8 +58,19 @@ export function SourceProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const toggleBookmark = async (sourceId: string, isBookmarked: boolean) => {
+    try {
+        const sourceRef = doc(db, "newsletterCollection", sourceId);
+        await updateDoc(sourceRef, {
+            isBookmarked: isBookmarked
+        });
+    } catch (error) {
+        console.error("Error updating bookmark status: ", error);
+    }
+  }
+
   return (
-    <SourceContext.Provider value={{ sources, addSource, loading }}>
+    <SourceContext.Provider value={{ sources, addSource, toggleBookmark, loading }}>
       {children}
     </SourceContext.Provider>
   );
