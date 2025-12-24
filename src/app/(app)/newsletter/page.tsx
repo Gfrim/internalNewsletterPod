@@ -23,6 +23,11 @@ export default function NewsletterPage() {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const { toast } = useToast();
 
+  const bookmarkedSources = React.useMemo(() => {
+    return sources.filter(source => source.isBookmarked);
+  }, [sources]);
+
+
   const handleSelectSource = (sourceId: string, isSelected: boolean) => {
     setSelectedSources((prev) => {
       const newSet = new Set(prev);
@@ -89,20 +94,20 @@ export default function NewsletterPage() {
         </div>
       );
     }
-    if (sources.length === 0) {
+    if (bookmarkedSources.length === 0) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
                  <BookHeart className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium">No Sources Found</h3>
+                <h3 className="text-lg font-medium">No Bookmarked Sources</h3>
                 <p className="text-muted-foreground">
-                    Go to the dashboard to add new sources to the repository.
+                    Go to the dashboard and click the heart icon to add sources to this list.
                 </p>
             </div>
         );
     }
     return (
         <div className="flex-1 overflow-y-auto space-y-4">
-            {sources.map((source) => (
+            {bookmarkedSources.map((source) => (
               <div key={source.id} className="flex items-start gap-4 rounded-md border p-4">
                 <Checkbox
                   id={`source-${source.id}`}
@@ -126,7 +131,7 @@ export default function NewsletterPage() {
     <>
       <PageHeader
         title="Newsletter Generator"
-        description="Select sources to compile and generate a draft newsletter."
+        description="Select sources from your bookmarked items to compile a draft."
       />
       <main className="flex-1 grid md:grid-cols-2 gap-8 p-4 sm:p-6 md:p-8 overflow-hidden">
         <Card className="flex flex-col">
