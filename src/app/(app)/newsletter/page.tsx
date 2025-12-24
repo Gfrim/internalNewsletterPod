@@ -13,6 +13,7 @@ import { generateNewsletterAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { useSource } from '@/context/source-context';
+import { Label } from '@/components/ui/label';
 
 export default function NewsletterPage() {
   const { sources, loading } = useSource();
@@ -21,14 +22,6 @@ export default function NewsletterPage() {
   const [generatedDraft, setGeneratedDraft] = React.useState('');
   const [isGenerating, setIsGenerating] = React.useState(false);
   const { toast } = useToast();
-
-  const bookmarkedSources = React.useMemo(() => sources.filter(s => s.isBookmarked), [sources]);
-
-  React.useEffect(() => {
-    // Pre-select all bookmarked sources
-    const bookmarkedIds = new Set(bookmarkedSources.map(s => s.id));
-    setSelectedSources(bookmarkedIds);
-  }, [bookmarkedSources]);
 
   const handleSelectSource = (sourceId: string, isSelected: boolean) => {
     setSelectedSources((prev) => {
@@ -91,25 +84,25 @@ export default function NewsletterPage() {
         <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                <p className="text-muted-foreground">Loading bookmarked sources...</p>
+                <p className="text-muted-foreground">Loading sources...</p>
             </div>
         </div>
       );
     }
-    if (bookmarkedSources.length === 0) {
+    if (sources.length === 0) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
                  <BookHeart className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium">No Bookmarked Sources</h3>
+                <h3 className="text-lg font-medium">No Sources Found</h3>
                 <p className="text-muted-foreground">
-                    Go to the dashboard and click the heart icon on any source to add it here.
+                    Go to the dashboard to add new sources to the repository.
                 </p>
             </div>
         );
     }
     return (
         <div className="flex-1 overflow-y-auto space-y-4">
-            {bookmarkedSources.map((source) => (
+            {sources.map((source) => (
               <div key={source.id} className="flex items-start gap-4 rounded-md border p-4">
                 <Checkbox
                   id={`source-${source.id}`}
@@ -118,9 +111,9 @@ export default function NewsletterPage() {
                   className="mt-1"
                 />
                 <div className="grid gap-1.5 leading-none">
-                  <label htmlFor={`source-${source.id}`} className="font-medium cursor-pointer">
+                  <Label htmlFor={`source-${source.id}`} className="font-medium cursor-pointer">
                     {source.title}
-                  </label>
+                  </Label>
                   <p className="text-sm text-muted-foreground line-clamp-2">{source.summary}</p>
                 </div>
               </div>
@@ -140,7 +133,7 @@ export default function NewsletterPage() {
           <CardHeader>
             <CardTitle>1. Select Content</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col">
+          <CardContent className="flex flex-col flex-1">
             {renderContent()}
           </CardContent>
         </Card>

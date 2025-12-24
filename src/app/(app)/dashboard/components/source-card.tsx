@@ -117,7 +117,7 @@ export function SourceCard({ source }: SourceCardProps) {
     toggleBookmark(source.id, newBookmarkState);
     toast({
         title: newBookmarkState ? 'Bookmarked!' : 'Bookmark Removed',
-        description: `"${source.title}" has been ${newBookmarkState ? 'added to' : 'removed from'} your newsletter list.`
+        description: `"${source.title}" has been ${newBookmarkState ? 'saved' : 'unsaved'}.`
     });
   }
 

@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 export default function DashboardPage() {
   const { sources, loading } = useSource();
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = React.useState('all');
   const [selectedCircle, setSelectedCircle] = React.useState('all');
   const [selectedContributor, setSelectedContributor] = React.useState('all');
+  const [showBookmarked, setShowBookmarked] = React.useState(false);
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
@@ -40,12 +42,12 @@ export default function DashboardPage() {
         const sourceDate = new Date(source.createdAt);
         const isDateInRange = !dateRange?.from || (dateRange.to ? isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) }) : isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.from) }));
 
-
         return (source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         source.summary.toLowerCase().includes(searchQuery.toLowerCase())) &&
         (selectedCategory === 'all' || source.category === selectedCategory) &&
         (selectedCircle === 'all' || source.circle === selectedCircle) &&
         (selectedContributor === 'all' || source.contributor === selectedContributor) &&
+        (!showBookmarked || source.isBookmarked) &&
         isDateInRange
     }
   );
@@ -66,7 +68,7 @@ export default function DashboardPage() {
   React.useEffect(() => {
     // Reset to page 1 when filters change
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory, selectedCircle, selectedContributor, dateRange, itemsPerPage]);
+  }, [searchQuery, selectedCategory, selectedCircle, selectedContributor, dateRange, itemsPerPage, showBookmarked]);
 
 
   const renderContent = () => {
@@ -206,6 +208,10 @@ export default function DashboardPage() {
                         <SelectItem value="48">48</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Switch id="show-bookmarked" checked={showBookmarked} onCheckedChange={setShowBookmarked} />
+                <Label htmlFor="show-bookmarked">Show Bookmarked Only</Label>
             </div>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 flex-1">
