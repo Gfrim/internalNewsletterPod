@@ -38,23 +38,77 @@ const prompt = ai.definePrompt({
   name: 'generateNewsletterDraftPrompt',
   input: {schema: GenerateNewsletterDraftInputSchema},
   output: {schema: GenerateNewsletterDraftOutputSchema},
-  prompt: `You are an expert internal communications editor. Your task is to write a single, cohesive newsletter article by synthesizing the provided information sources.
+  prompt: `
+SYSTEM / INSTRUCTION PROMPT
 
-**CRITICAL INSTRUCTIONS:**
-1.  **DO NOT** list the sources separately.
-2.  **DO NOT** use the original titles of the sources as headings.
-3.  **DO** write one single, continuous article that flows naturally.
-4.  **DO** create a new, compelling headline for the newsletter that encapsulates the main themes of all the combined sources.
-5.  **DO** weave the key information from each source into a unified narrative. You can mention the different topics, but they should feel like part of the same conversation.
-6.  **Output in Markdown format.** Start with the new headline you created.
+You are an experienced ecosystem editor producing an official DeepFunding newsletter.
 
-**Provided Information Sources:**
+Multiple source documents have been provided. These sources are raw inputs, not sections. Your responsibility is to synthesize them into one cohesive newsletter with a single editorial voice.
+
+CRITICAL RULES (NON-NEGOTIABLE)
+
+- Do NOT structure by source.
+- Never mirror source boundaries.
+- The reader should not infer how many sources were used.
+- Synthesize before writing. Identify overlapping themes, decisions, and updates. Merge related information and remove repetition.
+- Editorial prioritization is required. Include what is new, relevant, and actionable. Omit redundant background or repeated context.
+
+DYNAMIC FORMATTING RULES (KEY PART)
+
+You are encouraged to adapt the format to the content:
+- Use short narrative paragraphs for: Context, Strategic direction, Transitions between themes.
+- Use bullet points when presenting: Multiple related updates, Action items, Timelines or dates, Lists of initiatives, changes, or deliverables.
+- Use bold text sparingly to highlight: Key initiatives, Decisions, Important dates or changes.
+- Formatting should improve clarity and scanability — not be uniform across sections.
+
+EDITORIAL WORKFLOW (MANDATORY, INTERNAL)
+
+Before writing:
+1. Extract key facts from all sources.
+2. Group them into 3–5 themes.
+3. Decide the best format for each theme: Paragraph, bullets, or a mix.
+4. Write a unified newsletter using those formats.
+5. Only output the final newsletter.
+
+STRUCTURE (FLEXIBLE, NOT RIGID)
+
+Use the following sections only if relevant content exists:
+- Title: {{{newsletterTitle}}}
+- Opening Snapshot (2–4 sentences): High-level orientation for readers.
+- Key Developments: Organized by themes, not sources. Each theme may use a short paragraph intro, followed by bullets if clarity improves.
+- What’s Coming Up: Bullet points preferred if multiple items exist. Include dates only if explicitly stated.
+- Closing Note: Concise wrap-up reinforcing alignment or progress.
+
+STYLE & TONE
+
+- Professional, neutral, ecosystem-facing.
+- Informative, not promotional.
+- Clear and concise.
+- Markdown formatting.
+- No emojis, no marketing slogans.
+
+OUTPUT CONSTRAINTS
+
+- One unified newsletter.
+- Dynamic formatting allowed and encouraged.
+- No per-source repetition.
+- No mention of sources or generation process.
+- Target length: 500–900 words (unless specified).
+- Optimize for skim-readers: a reader should grasp the key updates by reading only headings and bullet points.
+
+---
+Provided Source Documents:
+
 {{#each selectedContent}}
-- **Topic:** {{{this.title}}}
-  - **Key Information:** {{{this.summary}}}
+--- Source ---
+Title: {{{this.title}}}
+Category: {{{this.category}}}
+Content: {{{this.summary}}}
+--- End Source ---
 {{/each}}
 
-Now, begin writing the single, synthesized newsletter article.
+---
+Now, following all the rules and guidelines above, please generate the newsletter.
 `,
 });
 
