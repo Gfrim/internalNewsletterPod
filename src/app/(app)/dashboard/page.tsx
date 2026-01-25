@@ -214,7 +214,8 @@ export default function DashboardPage() {
                 <Label htmlFor="show-bookmarked">Show Bookmarked Only</Label>
             </div>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 flex-1">
+        {/* <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 flex-1"> */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-start auto-rows-min place-content-start">
           {renderContent()}
         </div>
         {totalPages > 1 && (
