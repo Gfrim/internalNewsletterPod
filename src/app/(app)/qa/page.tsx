@@ -96,7 +96,7 @@ export default function QAPage() {
             {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                 <BrainCircuit className="w-16 h-16 text-primary/50 mb-4" />
-                <h2 className="text-xl font-semibold">Welcome to the Q&A Hub</h2>
+                <h2 className="text-xl font-semibold">Welcome to Contextual Search</h2>
                 <p className="text-muted-foreground">
                     Ask me anything about your sources, like "What were the biggest wins last quarter?"
                 </p>
