@@ -27,7 +27,7 @@ import { ThemeToggle } from '../theme-toggle';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/qa', icon: MessageCircleQuestion, label: 'Q&A' },
+  { href: '/qa', icon: MessageCircleQuestion, label: 'Contextual Search' },
   { href: '/newsletter', icon: Newspaper, label: 'Newsletter' },
 ];
 

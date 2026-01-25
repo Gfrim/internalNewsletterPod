@@ -87,11 +87,11 @@ export default function QAPage() {
   return (
     <div className="h-full flex flex-col">
       <PageHeader
-        title="AI-Powered Q&A"
-        description="Ask questions about your content repository to find updates quickly."
+        title="Contextual Search"
+        description="Ask natural-language questions and get synthesized answers from your uploaded sources."
       />
       <main className="flex-1 flex flex-col overflow-hidden px-4 sm:px-6 md:px-8 pb-4">
-        <div className="max-w-4xl w-full mx-auto flex flex-col flex-1">
+        <div className="w-full flex flex-col flex-1">
             <div className="flex-1 overflow-y-auto rounded-lg border bg-card p-4 space-y-6">
             {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
