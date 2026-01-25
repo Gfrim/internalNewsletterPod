@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 export default function NewsletterPage() {
   const { sources, loading } = useSource();
   const [selectedSources, setSelectedSources] = React.useState<Set<string>>(new Set());
-  const [newsletterTitle, setNewsletterTitle] = React.useState('Weekly Internal Update');
+  const newsletterTitle = 'Weekly Internal Update';
   const [generatedDraft, setGeneratedDraft] = React.useState('');
   const [isGenerating, setIsGenerating] = React.useState(false);
   const { toast } = useToast();
@@ -131,26 +131,17 @@ export default function NewsletterPage() {
     <>
       <PageHeader
         title="Newsletter Generator"
-        description="Select bookmarked items, set a title, and generate your draft."
+        description="Select bookmarked items and generate your newsletter draft."
       />
       <main className="flex-1 grid md:grid-cols-2 gap-8 p-4 sm:p-6 md:p-8 overflow-hidden">
         <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Select Content</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col flex-1">
+          <CardContent className="flex flex-col flex-1 min-h-0">
             {renderContent()}
           </CardContent>
-          <CardFooter className="flex-col items-start gap-4 pt-6">
-            <div className="w-full grid gap-2">
-                <Label htmlFor="newsletter-title">Newsletter Title</Label>
-                <Input
-                    id="newsletter-title"
-                    value={newsletterTitle}
-                    onChange={(e) => setNewsletterTitle(e.target.value)}
-                    placeholder="e.g., Weekly Internal Update"
-                />
-            </div>
+          <CardFooter className="pt-6">
             <Button 
                 onClick={handleGenerate} 
                 disabled={isGenerating || selectedSources.size === 0} 
