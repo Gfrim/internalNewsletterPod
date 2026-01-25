@@ -6,7 +6,7 @@ import { Clipboard, Loader2, Sparkles, BookHeart } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import type { Source } from '@/lib/types';
 import { generateNewsletterAction } from '@/app/actions';
@@ -131,73 +131,72 @@ export default function NewsletterPage() {
     <>
       <PageHeader
         title="Newsletter Generator"
-        description="Select sources from your bookmarked items to compile a draft."
+        description="Select bookmarked items, set a title, and generate your draft."
       />
       <main className="flex-1 grid md:grid-cols-2 gap-8 p-4 sm:p-6 md:p-8 overflow-hidden">
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>1. Select Content</CardTitle>
+            <CardTitle>Select Content</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1">
             {renderContent()}
           </CardContent>
+          <CardFooter className="flex-col items-start gap-4 pt-6">
+            <div className="w-full grid gap-2">
+                <Label htmlFor="newsletter-title">Newsletter Title</Label>
+                <Input
+                    id="newsletter-title"
+                    value={newsletterTitle}
+                    onChange={(e) => setNewsletterTitle(e.target.value)}
+                    placeholder="e.g., Weekly Internal Update"
+                />
+            </div>
+            <Button 
+                onClick={handleGenerate} 
+                disabled={isGenerating || selectedSources.size === 0} 
+                className="w-full"
+            >
+                {isGenerating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+                )}
+                Generate Newsletter
+            </Button>
+          </CardFooter>
         </Card>
         
-        <div className="flex flex-col gap-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle>2. Set Title & Generate</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-4">
-                    <Input
-                        value={newsletterTitle}
-                        onChange={(e) => setNewsletterTitle(e.target.value)}
-                        placeholder="Enter newsletter title..."
-                        className="flex-1"
+        <Card className="flex-1 flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Review Draft</CardTitle>
+                <Button variant="outline" size="sm" onClick={handleCopyToClipboard} disabled={!generatedDraft}>
+                    <Clipboard className="mr-2 h-4 w-4" />
+                    Copy
+                </Button>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+                {isGenerating && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-muted-foreground">AI is drafting your newsletter...</p>
+                        </div>
+                    </div>
+                )}
+                {!isGenerating && !generatedDraft && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <p className="text-muted-foreground">Your generated newsletter will appear here.</p>
+                    </div>
+                )}
+                {generatedDraft && (
+                    <Textarea
+                        readOnly
+                        value={generatedDraft}
+                        className="flex-1 w-full h-full min-h-[300px] resize-none"
                     />
-                    <Button onClick={handleGenerate} disabled={isGenerating || selectedSources.size === 0} className="w-full sm:w-auto">
-                        {isGenerating ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        )}
-                        Generate
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card className="flex-1 flex flex-col">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>3. Review Draft</CardTitle>
-                    <Button variant="outline" size="sm" onClick={handleCopyToClipboard} disabled={!generatedDraft}>
-                        <Clipboard className="mr-2 h-4 w-4" />
-                        Copy
-                    </Button>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                    {isGenerating && (
-                        <div className="flex-1 flex items-center justify-center">
-                            <div className="text-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                                <p className="text-muted-foreground">AI is drafting your newsletter...</p>
-                            </div>
-                        </div>
-                    )}
-                    {!isGenerating && !generatedDraft && (
-                        <div className="flex-1 flex items-center justify-center">
-                            <p className="text-muted-foreground">Your generated newsletter will appear here.</p>
-                        </div>
-                    )}
-                    {generatedDraft && (
-                        <Textarea
-                            readOnly
-                            value={generatedDraft}
-                            className="flex-1 w-full h-full min-h-[300px] resize-none"
-                        />
-                    )}
-                </CardContent>
-            </Card>
-        </div>
+                )}
+            </CardContent>
+        </Card>
       </main>
     </>
   );
