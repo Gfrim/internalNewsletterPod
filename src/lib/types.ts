@@ -16,5 +16,5 @@ export interface Source {
   createdAt: string;
   imageUrl?: string;
   contributor?: string;
-  isBookmarked?: boolean;
+  bookmarkedBy?: string[];
 }

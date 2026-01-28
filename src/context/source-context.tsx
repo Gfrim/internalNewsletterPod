@@ -4,12 +4,12 @@
 import * as React from 'react';
 import type { Source } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 interface SourceContextType {
   sources: Source[];
   addSource: (source: Omit<Source, 'id' | 'createdAt'>) => Promise<void>;
-  toggleBookmark: (sourceId: string, isBookmarked: boolean) => Promise<void>;
+  toggleBookmark: (sourceId: string, userId: string, isBookmarked: boolean) => Promise<void>;
   loading: boolean;
 }
 
@@ -58,11 +58,11 @@ export function SourceProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const toggleBookmark = async (sourceId: string, isBookmarked: boolean) => {
+  const toggleBookmark = async (sourceId: string, userId: string, isBookmarked: boolean) => {
     try {
         const sourceRef = doc(db, "newsletterCollection", sourceId);
         await updateDoc(sourceRef, {
-            isBookmarked: isBookmarked
+            bookmarkedBy: isBookmarked ? arrayUnion(userId) : arrayRemove(userId)
         });
     } catch (error) {
         console.error("Error updating bookmark status: ", error);

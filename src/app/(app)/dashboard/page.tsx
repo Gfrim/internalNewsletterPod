@@ -19,9 +19,11 @@ import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/context/auth-context';
 
 export default function DashboardPage() {
   const { sources, loading } = useSource();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState('all');
   const [selectedCircle, setSelectedCircle] = React.useState('all');
@@ -41,13 +43,14 @@ export default function DashboardPage() {
     (source) => {
         const sourceDate = new Date(source.createdAt);
         const isDateInRange = !dateRange?.from || (dateRange.to ? isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) }) : isWithinInterval(sourceDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.from) }));
+        const isBookmarkedForCurrentUser = user ? source.bookmarkedBy?.includes(user.uid) : false;
 
         return (source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         source.summary.toLowerCase().includes(searchQuery.toLowerCase())) &&
         (selectedCategory === 'all' || source.category === selectedCategory) &&
         (selectedCircle === 'all' || source.circle === selectedCircle) &&
         (selectedContributor === 'all' || source.contributor === selectedContributor) &&
-        (!showBookmarked || source.isBookmarked) &&
+        (!showBookmarked || isBookmarkedForCurrentUser) &&
         isDateInRange
     }
   );

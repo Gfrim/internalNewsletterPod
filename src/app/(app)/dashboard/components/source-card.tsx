@@ -54,6 +54,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useSource } from '@/context/source-context';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
 
 interface SourceCardProps {
   source: Source;
@@ -105,16 +106,27 @@ const categoryIcons: Record<Category, React.ElementType> = {
 };
 
 export function SourceCard({ source }: SourceCardProps) {
-  const CircleIcon = source.circle ? circleIcons[source.circle] || CircleIcon : null;
+  const CircleIcon = source.circle ? circleIcons[source.circle] : CircleIcon;
   const CategoryIcon = source.category ? categoryIcons[source.category] : null;
   const timeAgo = formatDistanceToNow(new Date(source.createdAt), { addSuffix: true });
   const { toggleBookmark } = useSource();
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  const isBookmarkedForCurrentUser = user ? source.bookmarkedBy?.includes(user.uid) : false;
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newBookmarkState = !source.isBookmarked;
-    toggleBookmark(source.id, newBookmarkState);
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: 'Could not identify user. Please refresh.',
+      });
+      return;
+    }
+    const newBookmarkState = !isBookmarkedForCurrentUser;
+    toggleBookmark(source.id, user.uid, newBookmarkState);
     toast({
         title: newBookmarkState ? 'Bookmarked!' : 'Bookmark Removed',
         description: `"${source.title}" has been ${newBookmarkState ? 'saved' : 'unsaved'}.`
@@ -128,7 +140,7 @@ export function SourceCard({ source }: SourceCardProps) {
           <span className="text-base font-semibold leading-tight pr-2">{source.title}</span>
           <div className="flex items-center shrink-0">
              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={handleBookmark}>
-                <Heart className={cn("h-4 w-4", source.isBookmarked && "fill-red-500 text-red-500")} />
+                <Heart className={cn("h-4 w-4", isBookmarkedForCurrentUser && "fill-red-500 text-red-500")} />
              </Button>
             {source.url && (
                 <a href={source.url} target="_blank" rel="noopener noreferrer" className="shrink-0">

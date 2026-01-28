@@ -14,9 +14,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { useSource } from '@/context/source-context';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/auth-context';
 
 export default function NewsletterPage() {
   const { sources, loading } = useSource();
+  const { user } = useAuth();
   const [selectedSources, setSelectedSources] = React.useState<Set<string>>(new Set());
   const newsletterTitle = 'Weekly Internal Update';
   const [generatedDraft, setGeneratedDraft] = React.useState('');
@@ -24,8 +26,9 @@ export default function NewsletterPage() {
   const { toast } = useToast();
 
   const bookmarkedSources = React.useMemo(() => {
-    return sources.filter(source => source.isBookmarked);
-  }, [sources]);
+    if (!user) return [];
+    return sources.filter(source => source.bookmarkedBy?.includes(user.uid));
+  }, [sources, user]);
 
 
   const handleSelectSource = (sourceId: string, isSelected: boolean) => {
