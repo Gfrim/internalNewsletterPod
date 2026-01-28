@@ -106,7 +106,7 @@ const categoryIcons: Record<Category, React.ElementType> = {
 };
 
 export function SourceCard({ source }: SourceCardProps) {
-  const CircleIcon = source.circle ? circleIcons[source.circle] : CircleIcon;
+  const IconForCircle = source.circle ? circleIcons[source.circle] : CircleIcon;
   const CategoryIcon = source.category ? categoryIcons[source.category] : null;
   const timeAgo = formatDistanceToNow(new Date(source.createdAt), { addSuffix: true });
   const { toggleBookmark } = useSource();
@@ -162,9 +162,9 @@ export function SourceCard({ source }: SourceCardProps) {
                 {CategoryIcon && <CategoryIcon className="mr-1.5 h-3 w-3" />}
                 {source.category}
             </Badge>
-            {source.circle && CircleIcon && (
+            {source.circle && IconForCircle && (
                 <Badge variant="outline" className={`capitalize ${circleColors[source.circle]}`}>
-                    <CircleIcon className="mr-1.5 h-3 w-3" />
+                    <IconForCircle className="mr-1.5 h-3 w-3" />
                     {source.circle}
                 </Badge>
             )}
